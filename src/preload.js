@@ -1,0 +1,130 @@
+const InputEvent = require('input-event');
+const got = require('got')
+const { exec } = require('child_process')
+const guide = require('./list.json')
+
+let key_callback, log;
+const errors = []
+
+const {
+    contextBridge,
+    ipcRenderer
+} = require("electron");
+
+// All of the Node.js APIs are available in the preload process.
+// It has the same sandbox as a Chrome extension.
+window.addEventListener('DOMContentLoaded', () => {
+  const replaceText = (selector, text) => {
+    const element = document.getElementById(selector)
+    if (element) element.innerText = text
+  }
+
+  for (const type of ['chrome', 'node', 'electron']) {
+    replaceText(`${type}-version`, process.versions[type])
+  }
+})
+
+contextBridge.exposeInMainWorld(
+    "api", {
+        list: async () => {
+            return guide
+            // try {
+            //     // const {body} = await got('http://localhost:5000/list.json')
+            //     // return JSON.parse(body)
+            // } catch (error) {
+            //     log && log(error.response.body);
+            //     !log && errors.push(error.response.body)
+            //     return {}
+            // }
+        },
+        off: () => {
+            exec("vcgencmd display_power 0", (err, stdout, stderr) => {})            
+        },
+        on: () => {
+            exec("vcgencmd display_power 1", (err, stdout, stderr) => {})            
+        },
+        keys: f => {
+            key_callback = f
+        },
+        log: f => {
+            log = f
+            log('test log')
+            log(`${errors}`)
+        },
+        halt: () => {
+            exec("sudo halt")
+        },
+        wpa_status: () => {
+            return new Promise((res, rej) => {
+                exec('wpa_cli status', (_, data) => {
+                    if (data.includes('DISCONNECTED')) {
+                        res(false)
+                    } else {
+                        res(true)
+                    }
+                })
+            })
+        },
+        wifi_list: () => {
+            return new Promise((res, rej) => {
+                exec('wpa_cli scan', (_1, _2) => {
+                    exec('wpa_cli scan_results', (err, data) => {
+                        const re = /..:..:..:.*/g
+                        const lst = [...data.matchAll(re)].map(_=>_[0].slice(1 + _[0].lastIndexOf('\t')))
+                        err && rej(err)
+                        !err && res(lst)
+                    })
+                })                
+            })
+        },
+        wifi_connect: (ssid, key) => {
+            return new Promise((res, rej) => {
+                const entry = `network={\\n    ssid="${ssid}"\\n    psk="${key}"\\n    key_mgmt=WPA-PSK\\n}`
+                exec(`sudo sed -i -e '$a\\\n${entry}' /etc/wpa_supplicant/wpa_supplicant.conf`, (err, _) => {
+                    err && rej(err)
+                    !err && exec('wpa_cli -i wlan0 reconfigure', (err, _) => {
+                        err && rej(err)
+                        !err && res(true)
+                    })
+                })
+            })
+        },
+        check_connection: () => {
+            return new Promise((res, rej) => {
+                got('https://google.com')
+                    .then(() => res(true))
+                    .catch(() => res(false))
+            })
+        },
+    }
+)
+
+// keypress: take first two n of 'event<n>' from /proc/bus/input/devices
+exec(
+    'cat /proc/bus/input/devices | grep Trust -A 5',
+    (_, txt) => {
+        try {
+            const re = /event(\d+)/g
+            const lst = [...txt.matchAll(re)].map(_=>_[1]).sort()
+            log && log('input:', lst)
+            !log && errors.push('input:', lst)
+
+            const input1 = new InputEvent(`/dev/input/event${lst[0]}`)
+            const input2 = new InputEvent(`/dev/input/event${lst[1]}`)
+            const keyboard1 = new InputEvent.Keyboard(input1)
+            const keyboard2 = new InputEvent.Keyboard(input2)
+            
+            keyboard1.on('keypress', listener);
+            keyboard2.on('keypress', listener);
+        } catch(err) {
+            log && log(err)
+            !log && errors.push(err)
+        }
+    }
+)
+
+function listener(e) {
+    if (key_callback) {
+        key_callback(e)
+    }
+}

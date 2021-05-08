@@ -1,0 +1,67 @@
+{
+  "name": "internet.for.elderly",
+  "version": "0.1.0",
+  "private": true,
+  "author": "enrico-san@trampolier.com",
+  "license": "CC0-1.0",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "@vue/composition-api": "^0.2.1",
+    "core-js": "^2.6.5",
+    "got": "^11.8.2",
+    "input-event": "^1.2.6",
+    "material-design-icons-iconfont": "^5.0.1",
+    "vue": "^2.6.10",
+    "vue-router": "^3.1.2",
+    "vuetify": "^2.0.0",
+    "vuex": "^3.1.1"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.10.0",
+    "@vue/cli-plugin-eslint": "^3.10.0",
+    "@vue/cli-service": "^3.10.0",
+    "babel-eslint": "^10.0.1",
+    "electron": "^12.0.2",
+    "electron-devtools-installer": "^3.1.0",
+    "eslint": "^5.16.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "sass": "^1.17.4",
+    "sass-loader": "^7.1.0",
+    "vue-cli-plugin-electron-builder": "^2.0.0-rc.6",
+    "vue-cli-plugin-vuetify": "^0.6.3",
+    "vue-template-compiler": "^2.6.10",
+    "vuetify-loader": "^1.2.2"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "rules": {},
+    "parserOptions": {
+      "parser": "babel-eslint"
+    }
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ],
+  "main": "background.js"
+}
