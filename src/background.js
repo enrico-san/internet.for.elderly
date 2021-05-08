@@ -18,8 +18,8 @@ async function createWindow() {
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
     },
-    alwaysOnTop: false,
-    kiosk: true
+    alwaysOnTop: process.env.ON_TARGET_MACHINE,
+    kiosk: process.env.ON_TARGET_MACHINE
   })
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
@@ -41,6 +41,7 @@ app.on('ready', async () => {
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
     try {
+      console.log('installing devtools')
       await installExtension(VUEJS_DEVTOOLS)
     } catch (e) {
       console.error('Vue Devtools failed to install:', e.toString())
