@@ -13,17 +13,26 @@ const errors = []
 
 // })
 
+let channels = {}
+
+async function retrieve_channels() {
+  try {
+    const { body } = await got(process.env.I4E_CHANNELS_URL)
+    channels = JSON.parse(body)
+  } catch (error) {
+    log && log(error.response.body);
+    !log && errors.push(error.response.body)
+  }
+
+}
+
+retrieve_channels()
+setInterval(() => {
+  retrieve_channels()
+}, 60*5*1000)
+
 contextBridge.exposeInMainWorld( 'api', {
-  list: async () => {
-    try {
-      const { body } = await got('http://localhost:5000/list.json')
-      return JSON.parse(body)
-    } catch (error) {
-      log && log(error.response.body);
-      !log && errors.push(error.response.body)
-      return {}
-    }
-  },
+  list: () => channels,
 
   off: () => {
     exec("vcgencmd display_power 0", (err, stdout, stderr) => { })

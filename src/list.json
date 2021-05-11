@@ -1,9 +1,12 @@
-{
-    "1": {"desc": "Natura", "title": "Documentario sulla Terra", "id": "MBx-vnVDW5Y"},
-    "2": {"desc": "Lezioni di cinese", "title": "Lezione 1: pinyin", "id": "nYXs_qi4Vp4"},
-    "3": {"desc": "Animali", "title": "Filmati di gatti divertenti", "id": "d5VMF1Hbd8o"},
-    "4": {"desc": "Paesaggi", "title": "Parco nazionale di Jiuzhaigou", "id": "y47SBkxHQTs"},
-    "5": {"desc": "Storie e racconti sulla Cina", "title": "Visitare il parco BEIHAI con Siyu", "id": "Y6PWlqaOXpI"},
-    "6": {"desc": "Musei e cose antiche", "title": "Museo Egizio di Torino", "id": "VkOrwLDVz2w"},
-    "7": {"desc": "Intrattenimento", "title": "Candid camera", "id": "xwXq9SeBi9k"}
-}
+[
+  {"ch": "1", "img": "https://img.youtube.com/vi/nYXs_qi4Vp4/0.jpg", "title": "Lezioni di cinese", "id": "nYXs_qi4Vp4"},
+  {"ch": "2", "img": "https://picsum.photos/id/11/500/300", "title": "Lezioni di cinese", "id": "nYXs_qi4Vp4"},
+  {"ch": "3", "img": "https://picsum.photos/id/11/500/300", "title": "Animali", "id": "d5VMF1Hbd8o"},
+  {"ch": "4", "img": "https://picsum.photos/id/11/500/300", "title": "Paesaggi", "id": "y47SBkxHQTs"},
+  {"ch": "5", "img": "https://picsum.photos/id/11/500/300", "title": "Storie e racconti sulla Cina Storie e racconti sulla Cina Storie e racconti sulla Cina ", "id": "Y6PWlqaOXpI"},
+  {"ch": "6", "img": "https://picsum.photos/id/11/500/300", "title": "Musei e cose antiche", "id": "VkOrwLDVz2w"},
+  {"ch": "7", "img": "https://picsum.photos/id/11/500/300", "title": "Intrattenimento", "id": "xwXq9SeBi9k"},
+  {"ch": "8", "img": "https://picsum.photos/id/11/500/300", "title": "Intrattenimento", "id": "xwXq9SeBi9k"},
+  {"ch": "9", "img": "https://picsum.photos/id/11/500/300", "title": "Intrattenimento", "id": "xwXq9SeBi9k"},
+  {"ch": "0", "img": "https://picsum.photos/id/11/500/300", "title": "Intrattenimento", "id": "xwXq9SeBi9k"}
+]

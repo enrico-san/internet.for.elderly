@@ -1,13 +1,6 @@
 <template>
     <v-app>
         <div>
-            <v-toolbar>
-                <v-toolbar-title @click="clicked()">Title</v-toolbar-title>
-
-                <div class="flex-grow-1"></div>
-
-            </v-toolbar>
-
             <home />
         </div>
     </v-app>
@@ -22,10 +15,6 @@ export default {
         Home
     },
     methods: {
-      clicked() {
-        // console.log(ipcRenderer.sendSync('synchronous-message', 'ping'))
-        window.api.list().then(console.log)
-      }
     }
 };
 </script>
