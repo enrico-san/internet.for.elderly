@@ -27,7 +27,7 @@
           <v-col
             class=""
             :cols="1"
-            align-self="center"
+            align-self="end"
             align="center"
             v-if="b != undefined"
           >
@@ -35,7 +35,7 @@
               ><h2>{{ b.ch }}</h2></v-card
             >
           </v-col>
-          <v-col class="" :cols="3" v-if="b != undefined">
+          <v-col class="" :cols="3" v-if="b != undefined" align-self="end">
             <v-card>
               <v-card-title>{{ b.title }}</v-card-title>
             </v-card>
@@ -54,7 +54,7 @@ export default {
   data() {
     return {
       channels: computed(() => {
-        const lst = this.$store.getters["channels"];
+        const lst = this.$store.getters.channels;
         const splitted = [];
         const half = Math.ceil(lst.length / 2);
         for (let i = 0; i < half; i++) {

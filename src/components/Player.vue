@@ -1,54 +1,217 @@
 <template>
   <v-container ma-0 pa-0>
-        <div id="player2"></div>
+    <div id="player"></div>
+    <v-overlay v-if="guide" :value="overlay" opacity="1">
+      <home />
+    </v-overlay>
   </v-container>
 </template>
 
 <script>
-      // <v-col v-show="false" cols="12">
-      //   <v-btn @click="log()">log</v-btn>
-      //   <v-btn @click="visible = !visible">toggle</v-btn>
-      //   <v-btn @click="create()">create</v-btn>
-      //   <v-btn @click="player2.loadVideoById('y47SBkxHQTs')">load video2</v-btn>
-      //   <v-btn @click="player2.pauseVideo()">pause2</v-btn>
-      //   <v-btn @click="player2.playVideo()">play2</v-btn>
-      // </v-col>
+// <v-col v-show="false" cols="12">
+//   <v-btn @click="visible = !visible">toggle</v-btn>
+//   <v-btn @click="create()">create</v-btn>
+//   <v-btn @click="player.loadVideoById('y47SBkxHQTs')">load video2</v-btn>
+//   <v-btn @click="player.pauseVideo()">pause2</v-btn>
+//   <v-btn @click="player.playVideo()">play2</v-btn>
+// </v-col>
+import Home from "./Home.vue";
+const keymap = {
+  172: "power", // home
+  15: "", // tab
+  155: "", // mail
+  140: "easter", // calc
+  69: "", // numlock
+  98: "", // slash
+  55: "", // star
+  14: "channels", // backspace
+  71: "7",
+  72: "8",
+  73: "9",
+  74: "", // -
+  75: "4",
+  76: "5",
+  77: "6",
+  78: "", // +
+  79: "1",
+  80: "2",
+  81: "3",
+  96: "pause", // enter
+  82: "0",
+  57: "rewind", // space
+  83: "forward", // del
+};
 
-  export default {
-    name: 'Player',
+export default {
+  name: "Player",
+  components: {
+    Home,
+  },
 
-    data: () => ({
-      player2: undefined,
-    }),
-    
-    methods: {
-      log() {
-        console.log(this.$youtube_api_ready())
-      },
-      create() {
-        const options = {
-          playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1 },
-          width: screen.width,
-          height: screen.height,
-          events: {
-            'onReady': this.onPlayerReady,
-            'onStateChange': this.onPlayerStateChange
-          },
-        }
-        this.player2 = this.$youtube_create_player('player2', options)
-      },
-      onPlayerReady(e) {
-        console.log(this.$youtube_state(e.target.getPlayerState()))
-        e.target.loadVideoById('y47SBkxHQTs')
-      },
+  data: () => ({
+    player: undefined,
+    ready: false,
+    overlay: true,
+    guide: true,
+    power: true,
+    current_channel: undefined,
+    state: undefined,
+    channels: undefined,
+    title_timeout: undefined,
+  }),
 
-      onPlayerStateChange(e) {
-        console.log(this.$youtube_state(e.target.getPlayerState()))
+  methods: {
+    create() {
+      const options = {
+        playerVars: { autoplay: 1, controls: 0, disablekb: 1 },
+        width: screen.width,
+        height: screen.height,
+        events: {
+          onReady: this.onPlayerReady,
+          onStateChange: this.onPlayerStateChange,
+        },
+      };
+      this.player = this.$youtube_create_player("player", options);
+
+      window.api.log((v) => console.log(v));
+      window.api.keys(this.listener);
+    },
+
+    onPlayerReady(e) {
+      console.log(this.$youtube_state(e.target.getPlayerState()));
+      this.ready = true
+    },
+
+    onPlayerStateChange(e) {
+      console.log(this.$youtube_state(e.target.getPlayerState()));
+    },
+
+    save_current_time() {
+      //eslint-disable-next-line no-undef
+      if (this.current_channel && YT.PlayerState.PLAYING) {
+        this.channels[
+          this.current_channel.choice
+        ].currentTime = this.player.playerInfo.currentTime;
+      }
+    },
+
+    toggle_channels() {
+      if (this.current_channel !== undefined) {
+        this.player.pauseVideo();
+        this.current_channel = undefined;
+      }
+      this.overlay = true
+    },
+
+    listener(e) {
+      // player not ready, ignore keypress
+      if (!this.ready) {
+        return;
       }
 
+      const choice = keymap[e.code];
+      console.log(e.code, "->", choice);
+
+      // easter egg?
+      if (this.state) {
+        if (choice === this.state.shift(0)) {
+          console.log(this.state);
+          if (this.state.length === 0) {
+            this.player.pauseVideo();
+            window.api.halt();
+            console.log("halting");
+          }
+          return;
+        } else {
+          this.state = undefined;
+          this.$nextTick(() => this.listener({ code: e.code }));
+        }
+        return;
+      }
+
+      if (choice === "easter") {
+        this.state = ["3", "1", "4", "1", "5"];
+        return;
+      } else {
+        this.state = undefined;
+      }
+
+      if (choice === "power") {
+        if (this.power) {
+          this.save_current_time();
+          if (this.current_channel) {
+            this.player.pauseVideo();
+          }
+          window.api.off();
+          console.log("off");
+          this.power = false;
+        } else {
+          this.toggle_channels();
+          window.api.on();
+          console.log("on");
+          this.power = true;
+        }
+        return;
+      }
+
+      if (!this.power) {
+        return;
+      }
+
+      if (choice == "pause") {
+        if (this.player.getPlayerState() === 1) {
+          this.player.pauseVideo();
+        } else {
+          this.player.playVideo();
+        }
+        return;
+      }
+
+      if (choice == "channels") {
+        this.save_current_time();
+        this.toggle_channels();
+        return;
+      }
+
+      if (choice === "rewind") {
+        this.player.seekTo(this.player.getCurrentTime() - 7);
+        this.player.playVideo();
+        return;
+      } else if (choice === "forward") {
+        this.player.seekTo(this.player.getCurrentTime() + 10);
+        this.player.playVideo();
+        return;
+      }
+
+      // after this, only numbers accepted
+      if (!this.channels || this.channels[choice] === undefined) {
+        return;
+      }
+
+      const same =
+        this.current_channel && choice === this.current_channel.choice;
+      console.log(`same ${same}`);
+      if (same) {
+        this.player.playVideo();
+        return;
+      }
+
+      this.save_current_time();
+
+      const { id } = this.channels[choice];
+      this.current_channel = { choice, id };
+      clearTimeout(this.title_timeout);
+      this.overlay = false;
+      this.player.loadVideoById(id, this.channels[choice].currentTime);
+      this.player.playVideo();
     },
-    mounted() {
-      this.$youtube_on_api_ready(this.create)
-    }
-  }
+  },
+  mounted() {
+    this.$youtube_on_api_ready(this.create);
+    this.channels = this.$store.getters.channels
+  },
+};
 </script>
+
+<style scoped>
+</style>

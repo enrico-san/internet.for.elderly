@@ -15,21 +15,25 @@ const errors = []
 
 let channels = {}
 
-async function retrieve_channels() {
-  try {
-    const { body } = await got(process.env.I4E_CHANNELS_URL)
-    channels = JSON.parse(body)
-  } catch (error) {
-    log && log(error.response.body);
-    !log && errors.push(error.response.body)
-  }
+// async function retrieve_channels() {
+//   try {
+//     console.log('get channel guide')
+//     const { body } = await got(process.env.I4E_CHANNELS_URL)
+//     console.log('got channel guide')
+//     channels = JSON.parse(body)
+//     console.log('parsed channel guide', channels)
+//   } catch (error) {
+//     console.log('error in channel guide')
+//     log && log(error.response.body);
+//     !log && errors.push(error.response.body)
+//   }
 
-}
+// }
 
-retrieve_channels()
-setInterval(() => {
-  retrieve_channels()
-}, 60*5*1000)
+// retrieve_channels()
+// setInterval(() => {
+//   retrieve_channels()
+// }, 60*5*1000)
 
 contextBridge.exposeInMainWorld( 'api', {
   list: () => channels,
