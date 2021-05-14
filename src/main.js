@@ -8,10 +8,12 @@ import 'vuetify/dist/vuetify.min.css'
 import store from './store/index';
 import router from './router/router';
 import VueCompositionApi from '@vue/composition-api';
+import youtube from './plugins/youtube'
 
 Vue.use(VueCompositionApi);
 Vue.use(Vuetify)
 Vue.use(Vuex)
+Vue.use(youtube)
 
 Vue.config.productionTip = false
 
