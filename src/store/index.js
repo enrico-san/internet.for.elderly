@@ -3,8 +3,6 @@ import Vuex from 'vuex';
 
 Vue.use(Vuex);
 
-const tmp = require('../list.json')
-
 export default new Vuex.Store({
   state: {
   },
@@ -16,6 +14,6 @@ export default new Vuex.Store({
   },
   getters: {  // store.getters.<var>
     //<var>(state) { return state.var }
-    channels() { return tmp /*window.api.list()*/ },
+    channels() { return window.api.list() },
   },
 })

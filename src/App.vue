@@ -18,7 +18,7 @@ export default {
         Player,
     },
     methods: {
-    }
+    },
 };
 </script>
 

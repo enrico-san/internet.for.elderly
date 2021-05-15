@@ -22,6 +22,11 @@ async function createWindow() {
     kiosk: process.env.ON_TARGET_MACHINE
   })
 
+  win.webContents.setWindowOpenHandler = url => {
+    console.log("stop popup", url)
+    return {action: 'deny'}
+  };
+
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)

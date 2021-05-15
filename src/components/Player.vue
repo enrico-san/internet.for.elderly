@@ -1,8 +1,8 @@
 <template>
   <v-container ma-0 pa-0>
     <div id="player"></div>
-    <v-overlay v-if="guide" :value="overlay" opacity="1">
-      <home />
+    <v-overlay :value="true" opacity="0.5">
+      <home v-show="guide" />
     </v-overlay>
   </v-container>
 </template>
@@ -17,30 +17,35 @@
 // </v-col>
 import Home from "./Home.vue";
 const keymap = {
-  172: "power", // home
-  15: "", // tab
-  155: "", // mail
-  140: "easter", // calc
-  69: "", // numlock
-  98: "", // slash
-  55: "", // star
-  14: "channels", // backspace
-  71: "7",
-  72: "8",
-  73: "9",
-  74: "", // -
-  75: "4",
-  76: "5",
-  77: "6",
-  78: "", // +
-  79: "1",
-  80: "2",
-  81: "3",
-  96: "pause", // enter
-  82: "0",
-  57: "rewind", // space
-  83: "forward", // del
-};
+  "BrowserHome": 'power',
+  "Tab": '',
+  "LaunchMail": '',
+  "LaunchApp2": 'easter',
+
+  "NumLock": '',
+  "NumpadDivide": '',
+  "NumpadMultiply": '',
+  "Backspace": 'channels',
+
+  "Numpad7": '7',
+  "Numpad8": '8',
+  "Numpad9": '9',
+
+  "Numpad4": '4',
+  "Numpad5": '5',
+  "Numpad6": '6',
+
+  "Numpad1": '1',
+  "Numpad2": '2',
+  "Numpad3": '3',
+
+  "Numpad0": '0',
+  "Space": 'rewind',
+  "NumpadDecimal": 'forward',
+
+  "NumpadEnter": 'pause',
+}
+
 
 export default {
   name: "Player",
@@ -51,7 +56,6 @@ export default {
   data: () => ({
     player: undefined,
     ready: false,
-    overlay: true,
     guide: true,
     power: true,
     current_channel: undefined,
@@ -74,12 +78,12 @@ export default {
       this.player = this.$youtube_create_player("player", options);
 
       window.api.log((v) => console.log(v));
-      window.api.keys(this.listener);
     },
 
     onPlayerReady(e) {
       console.log(this.$youtube_state(e.target.getPlayerState()));
       this.ready = true
+      window.onkeydown = this.listener
     },
 
     onPlayerStateChange(e) {
@@ -100,7 +104,7 @@ export default {
         this.player.pauseVideo();
         this.current_channel = undefined;
       }
-      this.overlay = true
+      this.guide = true
     },
 
     listener(e) {
@@ -201,7 +205,7 @@ export default {
       const { id } = this.channels[choice];
       this.current_channel = { choice, id };
       clearTimeout(this.title_timeout);
-      this.overlay = false;
+      this.guide = false;
       this.player.loadVideoById(id, this.channels[choice].currentTime);
       this.player.playVideo();
     },
