@@ -1,12 +1,11 @@
 console.log('preload.js loaded')
 
-import { ipcRenderer, contextBridge } from 'electron'
+import { contextBridge } from 'electron'
 
-const InputEvent = require('input-event');
 const got = require('got')
 const { exec } = require('child_process')
 
-let key_callback, log = data => errors.push(data);
+let log = data => errors.push(data);
 const errors = []
 
 // window.addEventListener('DOMContentLoaded', () => {
@@ -45,10 +44,6 @@ contextBridge.exposeInMainWorld( 'api', {
 
   on: () => {
     exec("vcgencmd display_power 1", (err, stdout, stderr) => { })
-  },
-
-  keys: f => {
-    key_callback = f
   },
 
   log: f => {

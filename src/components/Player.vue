@@ -1,7 +1,7 @@
 <template>
   <v-container ma-0 pa-0>
     <div id="player"></div>
-    <v-overlay :value="true" opacity="0.5">
+    <v-overlay :value="true" :opacity="opacity">
       <home v-show="guide" />
     </v-overlay>
   </v-container>
@@ -57,6 +57,7 @@ export default {
     player: undefined,
     ready: false,
     guide: true,
+    opacity: 0,
     power: true,
     current_channel: undefined,
     state: undefined,
@@ -105,6 +106,7 @@ export default {
         this.current_channel = undefined;
       }
       this.guide = true
+      this.opacity = 1
     },
 
     listener(e) {
@@ -206,6 +208,7 @@ export default {
       this.current_channel = { choice, id };
       clearTimeout(this.title_timeout);
       this.guide = false;
+      this.opacity = 0
       this.player.loadVideoById(id, this.channels[choice].currentTime);
       this.player.playVideo();
     },
