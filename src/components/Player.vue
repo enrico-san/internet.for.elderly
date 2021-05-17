@@ -2,7 +2,7 @@
   <v-container ma-0 pa-0>
     <div id="player"></div>
     <v-overlay :value="true" :opacity="opacity">
-      <home v-show="guide" />
+      <home v-show="show_guide" />
     </v-overlay>
   </v-container>
 </template>
@@ -56,14 +56,19 @@ export default {
   data: () => ({
     player: undefined,
     ready: false,
-    guide: true,
+    show_guide: true,
     opacity: 0,
     power: true,
     current_channel: undefined,
     state: undefined,
-    channels: undefined,
     title_timeout: undefined,
   }),
+
+  computed: {
+    guide () {
+      return this.$store.state.guide
+    }
+  },
 
   methods: {
     create() {
@@ -94,7 +99,7 @@ export default {
     save_current_time() {
       //eslint-disable-next-line no-undef
       if (this.current_channel && YT.PlayerState.PLAYING) {
-        this.channels[
+        this.guide[
           this.current_channel.choice
         ].currentTime = this.player.playerInfo.currentTime;
       }
@@ -105,7 +110,7 @@ export default {
         this.player.pauseVideo();
         this.current_channel = undefined;
       }
-      this.guide = true
+      this.show_guide = true
       this.opacity = 1
     },
 
@@ -190,7 +195,7 @@ export default {
       }
 
       // after this, only numbers accepted
-      if (!this.channels || this.channels[choice] === undefined) {
+      if (!this.guide || this.guide[choice] === undefined) {
         return;
       }
 
@@ -204,18 +209,26 @@ export default {
 
       this.save_current_time();
 
-      const { id } = this.channels[choice];
+      const { id, playlist } = this.guide[choice];
       this.current_channel = { choice, id };
       clearTimeout(this.title_timeout);
-      this.guide = false;
+      this.show_guide = false;
       this.opacity = 0
-      this.player.loadVideoById(id, this.channels[choice].currentTime);
+      if (playlist) {
+        this.player.loadPlaylist({list: id, listType: 'playlist'});  // add currentTime
+      } else {
+        this.player.loadVideoById(id, this.guide[choice].currentTime);
+      }
       this.player.playVideo();
     },
+
+    guide_updated() {
+      this.$store.dispatch('UPDATE_GUIDE')
+    }
   },
   mounted() {
     this.$youtube_on_api_ready(this.create);
-    this.channels = this.$store.getters.channels
+    window.api.set_guide_callback(this.guide_updated)
   },
 };
 </script>

@@ -2,10 +2,10 @@
   <v-app>
     <v-main>
       <v-container class="pt-8 pl-8 ma-0">
-        <v-row v-for="([a, b], index) in channels.value" :key="index">
+        <v-row v-for="([a, b], index) in guide.value" :key="index">
           <v-col class="" :cols="2">
             <v-card>
-              <v-img :src="`https://img.youtube.com/vi/${a.id}/0.jpg`"></v-img>
+              <v-img :src="a.thumbnail_url"></v-img>
             </v-card>
           </v-col>
           <v-col class="" :cols="1" align-self="end" align="center">
@@ -21,7 +21,7 @@
 
           <v-col class="ml-0" :cols="2" v-if="b != undefined">
             <v-card>
-              <v-img :src="`https://img.youtube.com/vi/${b.id}/0.jpg`"></v-img>
+              <v-img :src="b.thumbnail_url"></v-img>
             </v-card>
           </v-col>
           <v-col
@@ -53,12 +53,14 @@ export default {
   name: "Home",
   data() {
     return {
-      channels: computed(() => {
-        const lst = this.$store.getters.channels;
+      guide: computed(() => {
+        const guide = Object.entries(this.$store.getters.guide);
+        guide.sort( (a,b) => Number.parseInt(a[0]) - Number.parseInt(b[0]))
+        guide.forEach( el => Object.assign(el[1], {ch: el[0]}) )  // [1, {...}] to [1, {ch: 1, ...}]
         const splitted = [];
-        const half = Math.ceil(lst.length / 2);
+        const half = Math.ceil(guide.length / 2);
         for (let i = 0; i < half; i++) {
-          splitted.push([lst[i], lst[half + i]]);
+          splitted.push([guide[i][1], guide[half + i][1]]);
         }
         return splitted;
       }),

@@ -1,12 +1,12 @@
-[
-  {"ch": "1", "img": "https://img.youtube.com/vi/nYXs_qi4Vp4/0.jpg", "title": "Lezioni di cinese", "id": "nYXs_qi4Vp4"},
-  {"ch": "2", "img": "https://picsum.photos/id/11/500/300", "title": "Lezioni di cinese", "id": "nYXs_qi4Vp4"},
-  {"ch": "3", "img": "https://picsum.photos/id/11/500/300", "title": "Animali", "id": "d5VMF1Hbd8o"},
-  {"ch": "4", "img": "https://picsum.photos/id/11/500/300", "title": "Paesaggi", "id": "y47SBkxHQTs"},
-  {"ch": "5", "img": "https://picsum.photos/id/11/500/300", "title": "Storie e racconti sulla Cina Storie e racconti sulla Cina Storie e racconti sulla Cina ", "id": "Y6PWlqaOXpI"},
-  {"ch": "6", "img": "https://picsum.photos/id/11/500/300", "title": "Musei e cose antiche", "id": "VkOrwLDVz2w"},
-  {"ch": "7", "img": "https://picsum.photos/id/11/500/300", "title": "Paesaggi", "id": "y47SBkxHQTs"},
-  {"ch": "8", "img": "https://picsum.photos/id/11/500/300", "title": "Paesaggi", "id": "y47SBkxHQTs"},
-  {"ch": "9", "img": "https://picsum.photos/id/11/500/300", "title": "Paesaggi", "id": "y47SBkxHQTs"},
-  {"ch": "0", "img": "https://picsum.photos/id/11/500/300", "title": "Intrattenimento", "id": "xwXq9SeBi9k"}
-]
+{
+  "1": {"id": "nYXs_qi4Vp4"},
+  "2": {"id": "nYXs_qi4Vp4"},
+  "3": {"id": "d5VMF1Hbd8o"},
+  "4": {"id": "y47SBkxHQTs"},
+  "5": {"id": "Y6PWlqaOXpI"},
+  "6": {"id": "VkOrwLDVz2w"},
+  "7": {"id": "y47SBkxHQTs"},
+  "8": {"id": "y47SBkxHQTs"},
+  "9": {"id": "y47SBkxHQTs"},
+  "0": {"id": "PLt-M8o1W_GdSzB2W4rsrbndjJMJR2WpyT", "playlist": true}
+}
