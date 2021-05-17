@@ -15,15 +15,12 @@ const errors = []
 let guide = {}
 let guide_callback = undefined
 
-
-// **** TODO: update guide instead of replace
-
 async function retrieve_guide() {
   try {
     const json_prom_1 = got(process.env.I4E_GUIDE_URL).json()
-    guide = await json_prom_1
-    log(guide)
-    for (let el of Object.values(guide)) {
+    const new_guide = await json_prom_1
+    
+    for (let el of Object.values(new_guide)) {
       const id = el.id
       let url
       if (el.playlist) {
@@ -34,11 +31,18 @@ async function retrieve_guide() {
       const json_prom_2 = got(url).json()
       const info = await json_prom_2
       Object.assign(el, info)
-      log(el)
     }
+    
+    for (let [k,v] of Object.entries(new_guide)) {
+      if (!guide.hasOwnProperty(k)) {
+        guide[k] = {}
+      }
+      Object.assign(guide[k], v)
+    }
+
     guide_callback && guide_callback()
   } catch (error) {
-    log(error.response.body);
+    log(error);
   }
 }
 
@@ -48,6 +52,10 @@ setInterval(() => {
 }, 60*1*1000)
 
 contextBridge.exposeInMainWorld( 'api', {
+  update_current_time(key, time) {
+    guide[key].currentTime = time
+  },
+  
   set_guide_callback: (cb) => {
     guide_callback = cb
     guide_callback()

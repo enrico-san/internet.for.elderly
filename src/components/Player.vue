@@ -99,9 +99,7 @@ export default {
     save_current_time() {
       //eslint-disable-next-line no-undef
       if (this.current_channel && YT.PlayerState.PLAYING) {
-        this.guide[
-          this.current_channel.choice
-        ].currentTime = this.player.playerInfo.currentTime;
+        this.$store.dispatch('UPDATE_CURRENT_TIME', [this.current_channel.choice, this.player.playerInfo.currentTime])
       }
     },
 
