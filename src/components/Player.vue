@@ -2,19 +2,15 @@
   <v-container ma-0 pa-0>
     <div id="player"></div>
     <v-overlay :value="true" :opacity="opacity">
+      <transition name="fade" @enter="enter_title">
+        <div class="pa-4" v-if="show_title" id="title">{{`${current_channel.choice} - ${guide[current_channel.choice].title}`}}</div>
+      </transition>
       <home v-show="show_guide" />
     </v-overlay>
   </v-container>
 </template>
 
 <script>
-// <v-col v-show="false" cols="12">
-//   <v-btn @click="visible = !visible">toggle</v-btn>
-//   <v-btn @click="create()">create</v-btn>
-//   <v-btn @click="player.loadVideoById('y47SBkxHQTs')">load video2</v-btn>
-//   <v-btn @click="player.pauseVideo()">pause2</v-btn>
-//   <v-btn @click="player.playVideo()">play2</v-btn>
-// </v-col>
 import Home from "./Home.vue";
 const keymap = {
   "BrowserHome": 'power',
@@ -62,6 +58,7 @@ export default {
     current_channel: undefined,
     state: undefined,
     title_timeout: undefined,
+    show_title: false,
   }),
 
   computed: {
@@ -71,6 +68,11 @@ export default {
   },
 
   methods: {
+    enter_title() {
+      console.log('enter_title')
+      clearTimeout(this.title_timeout)
+      this.title_timeout = setTimeout(() => {this.show_title = false}, 5000)
+    },
     create() {
       const options = {
         playerVars: { autoplay: 1, controls: 0, disablekb: 1 },
@@ -209,11 +211,11 @@ export default {
 
       const { id, playlist } = this.guide[choice];
       this.current_channel = { choice, id };
-      clearTimeout(this.title_timeout);
+      this.show_title = true
       this.show_guide = false;
       this.opacity = 0
       if (playlist) {
-        this.player.loadPlaylist({list: id, listType: 'playlist'});  // add currentTime
+        this.player.loadPlaylist({list: id, listType: 'playlist'});  // TODO: add currentTime
       } else {
         this.player.loadVideoById(id, this.guide[choice].currentTime);
       }
@@ -232,4 +234,21 @@ export default {
 </script>
 
 <style scoped>
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .3s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+#title {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  background-color: black;
+  color: white;
+  font-size: 3rem !important;
+  word-break: normal !important;
+  line-height: 3rem !important;
+}
+
 </style>

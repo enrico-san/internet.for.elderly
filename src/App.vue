@@ -33,6 +33,7 @@ html, body {
     height: 100%;
     overflow: hidden;
     background-color: #121212;
+    cursor: none;
 }
 
 body::-webkit-scrollbar { 
