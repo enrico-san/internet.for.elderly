@@ -2,12 +2,12 @@
   "name": "internet.for.elderly",
   "version": "0.1.0",
   "private": true,
-  "author": "enrico-san@trampolier.com",
+  "author": "Enrico San <enrico-san@trampolier.com>",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "electron:build": "vue-cli-service electron:build",
+    "electron:build": "vue-cli-service electron:build --dir --armv7l --linux deb",
     "electron:serve": "vue-cli-service electron:serve",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
