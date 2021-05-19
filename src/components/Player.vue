@@ -2,7 +2,7 @@
   <v-container ma-0 pa-0>
     <div id="player"></div>
     <v-overlay :value="true" :opacity="opacity">
-      <transition name="fade" @enter="enter_title">
+      <transition name="fade">
         <div class="pa-4" v-if="show_title" id="title">{{`${current_channel.choice} - ${guide[current_channel.choice].title}`}}</div>
       </transition>
       <home v-show="show_guide" />
@@ -68,11 +68,6 @@ export default {
   },
 
   methods: {
-    enter_title() {
-      console.log('enter_title')
-      clearTimeout(this.title_timeout)
-      this.title_timeout = setTimeout(() => {this.show_title = false}, 5000)
-    },
     create() {
       const options = {
         playerVars: { autoplay: 1, controls: 0, disablekb: 1 },
@@ -111,6 +106,7 @@ export default {
         this.current_channel = undefined;
       }
       this.show_guide = true
+      this.show_title = false
       this.opacity = 1
     },
 
@@ -233,9 +229,13 @@ export default {
       record({action: 'change', new_channel: { choice, id, playlist }})
       
       this.current_channel = { choice, id };
-      this.show_title = true
       this.show_guide = false;
       this.opacity = 0
+      
+      this.show_title = true
+      clearTimeout(this.title_timeout)
+      this.title_timeout = setTimeout(() => {this.show_title = false}, 10000)
+      
       if (playlist) {
         this.player.loadPlaylist({list: id, listType: 'playlist'});  // TODO: add currentTime
       } else {
