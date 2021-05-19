@@ -115,12 +115,28 @@ export default {
     },
 
     listener(e) {
+      const choice = keymap[e.code];
+
+      const record = (obj) => {
+        const preamble = {
+          code: e.code,
+          choice,
+          power: this.power,
+          ready: this.ready,
+          show_guide: this.show_guide,
+          current_channel: this.current_channel,
+          state: this.state,
+          player_state: this.player && this.player.getPlayerState(),
+          player_current_time: this.player && this.player.getCurrentTime(),
+        }
+        window.api.record(Object.assign({}, obj, preamble))
+      }
+      
       // player not ready, ignore keypress
       if (!this.ready) {
         return;
       }
 
-      const choice = keymap[e.code];
       console.log(e.code, "->", choice);
 
       // easter egg?
@@ -179,16 +195,19 @@ export default {
       }
 
       if (choice == "channels") {
+        record({action: 'guide'})
         this.save_current_time();
         this.toggle_channels();
         return;
       }
 
       if (choice === "rewind") {
+        record({action: 'rewind'})
         this.player.seekTo(this.player.getCurrentTime() - 7);
         this.player.playVideo();
         return;
       } else if (choice === "forward") {
+        record({action: 'forward'})
         this.player.seekTo(this.player.getCurrentTime() + 10);
         this.player.playVideo();
         return;
@@ -209,7 +228,10 @@ export default {
 
       this.save_current_time();
 
+
       const { id, playlist } = this.guide[choice];
+      record({action: 'change', new_channel: { choice, id, playlist }})
+      
       this.current_channel = { choice, id };
       this.show_title = true
       this.show_guide = false;

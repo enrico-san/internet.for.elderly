@@ -1,12 +1,14 @@
-console.log('preload.js loaded')
-
 import { contextBridge } from 'electron'
+import {appendFile} from 'fs'
 
 const got = require('got')
 const { exec } = require('child_process')
 
 let log = data => errors.push(data);
 const errors = []
+let last_time = Date.now()
+
+record({action: 'reboot'})
 
 // window.addEventListener('DOMContentLoaded', () => {
 
@@ -51,7 +53,18 @@ setInterval(() => {
   retrieve_guide()
 }, 60*1*1000)
 
+function record(obj) {
+  const preamble = {
+    ts: new Date(),
+    seconds_passed: Math.round((Date.now() - last_time) / 1000),
+  }
+  last_time = Date.now()
+  appendFile(process.env.RECORD_FILE, "  " + JSON.stringify(Object.assign(preamble, obj)) + "\n", () => {})
+}
+
 contextBridge.exposeInMainWorld( 'api', {
+  record,
+
   update_current_time(key, time) {
     guide[key].currentTime = time
   },
