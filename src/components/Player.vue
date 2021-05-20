@@ -90,7 +90,26 @@ export default {
     },
 
     onPlayerStateChange(e) {
-      console.log(this.$youtube_state(e.target.getPlayerState()));
+      const stateN = e.target.getPlayerState()
+      const state = this.$youtube_state(stateN)
+      console.log(stateN, state);
+      if (state === 'ended') {
+        const { playlist } = this.current_channel
+        const lastIndex = playlist ?this.player.getPlaylist().length - 1 :-1
+        const currentIndex = playlist ?this.player.getPlaylistIndex() :0
+        const last = !playlist || currentIndex === lastIndex
+        if (last) {
+          this.$nextTick(() => {
+            if (playlist) {
+                this.player.playVideoAt(0)
+                this.player.pauseVideo()
+            } else {
+              this.player.seekTo(0)
+              this.player.pauseVideo()
+            }
+          })
+        }
+      }
     },
 
     save_current_time() {
@@ -138,11 +157,10 @@ export default {
       // easter egg?
       if (this.state) {
         if (choice === this.state.shift(0)) {
-          console.log(this.state);
           if (this.state.length === 0) {
             this.player.pauseVideo();
+            record({action: 'halting'})
             window.api.halt();
-            console.log("halting");
           }
           return;
         } else {
@@ -165,11 +183,13 @@ export default {
           if (this.current_channel) {
             this.player.pauseVideo();
           }
+          record({action: 'power off'})
           window.api.off();
           console.log("off");
           this.power = false;
         } else {
           this.toggle_channels();
+          record({action: 'power on'})
           window.api.on();
           console.log("on");
           this.power = true;
@@ -178,13 +198,16 @@ export default {
       }
 
       if (!this.power) {
+        record({action: 'activity while off'})
         return;
       }
 
       if (choice == "pause") {
         if (this.player.getPlayerState() === 1) {
+          record({action: 'pause'})
           this.player.pauseVideo();
         } else {
+          record({action: 'unpause'})
           this.player.playVideo();
         }
         return;
@@ -216,7 +239,7 @@ export default {
 
       const same =
         this.current_channel && choice === this.current_channel.choice;
-      console.log(`same ${same}`);
+      record({action: 'same channel'})
       if (same) {
         this.player.playVideo();
         return;
@@ -224,11 +247,10 @@ export default {
 
       this.save_current_time();
 
-
       const { id, playlist } = this.guide[choice];
       record({action: 'change', new_channel: { choice, id, playlist }})
       
-      this.current_channel = { choice, id };
+      this.current_channel = { choice, id, playlist};
       this.show_guide = false;
       this.opacity = 0
       
@@ -243,14 +265,9 @@ export default {
       }
       this.player.playVideo();
     },
-
-    guide_updated() {
-      this.$store.dispatch('UPDATE_GUIDE')
-    }
   },
   mounted() {
     this.$youtube_on_api_ready(this.create);
-    window.api.set_guide_callback(this.guide_updated)
   },
 };
 </script>

@@ -132,7 +132,7 @@ contextBridge.exposeInMainWorld( 'api', {
     })
   },
 
-  check_connection: () => {
+  check_connectivity: () => {
     return new Promise((res, rej) => {
       got('https://google.com')
         .then(() => res(true))

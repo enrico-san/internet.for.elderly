@@ -1,8 +1,7 @@
 <template>
     <v-app>
         <div>
-            <!-- <home /> -->
-            <player />
+            <player v-if="has_internet" />
         </div>
     </v-app>
 </template>
@@ -12,13 +11,37 @@
 import Player from "./components/Player.vue"
 
 export default {
-    name: "App",
-    components: {
-        // Home,
-        Player,
+  name: "App",
+  data() {
+    return {
+      has_internet: false,
+    }
+  },
+  components: {
+      Player,
+  },
+  methods: {
+    check_connectivity() {
+      const that = this
+      console.log('checking internet...')
+      window.api.check_connectivity().then(ready => {
+        if (!ready) {
+          console.log('retry')
+          setTimeout(that.check_connectivity, 10000)
+        } else {
+          console.log('done')
+          this.has_internet = true
+        }
+      })
     },
-    methods: {
-    },
+    guide_updated() {
+      this.$store.dispatch('UPDATE_GUIDE')
+    }
+  },
+  mounted() {
+    window.api.set_guide_callback(this.guide_updated)
+    this.check_connectivity()
+  }
 };
 </script>
 
