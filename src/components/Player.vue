@@ -68,6 +68,10 @@ export default {
     title_timeout: undefined,
     show_title: false,
     paused: false,
+    startSeconds: undefined,
+    wait: false,
+    code: undefined,
+    prev_code: undefined,
   }),
 
   computed: {
@@ -95,13 +99,14 @@ export default {
     onPlayerReady(e) {
       console.log(this.$youtube_state(e.target.getPlayerState()));
       this.ready = true;
-      window.onkeydown = this.listener;
+      window.onkeydown = this.pre_listener;
     },
 
     onPlayerStateChange(e) {
       const stateN = e.target.getPlayerState();
       const state = this.$youtube_state(stateN);
       console.log(stateN, state);
+
       if (state === "ended") {
         const { playlist } = this.current_channel;
         const lastIndex = playlist ? this.player.getPlaylist().length - 1 : -1;
@@ -120,6 +125,19 @@ export default {
             }
           });
         }
+      } else if (state === 'playing') {
+        const { choice, playlist } = this.current_channel
+        if (!playlist) {
+          return
+        }
+        const time = this.guide[choice].currentTime
+        const index = this.player.getPlaylistIndex()
+        console.log(`choice ${choice}, index ${index}, time ${time}, startSeconds ${this.startSeconds}, duration ${this.player.getDuration()}`)
+        
+        if (this.startSeconds) {
+          this.player.seekTo(this.startSeconds)
+          this.startSeconds = undefined
+        }
       }
     },
 
@@ -129,6 +147,7 @@ export default {
         this.$store.dispatch("UPDATE_CURRENT_TIME", [
           this.current_channel.choice,
           this.player.playerInfo.currentTime,
+          this.player.getPlaylistIndex()
         ]);
       }
     },
@@ -144,12 +163,38 @@ export default {
       this.opacity = 1;
     },
 
-    listener(e) {
-      const choice = keymap[e.code];
+    pre_listener(e) {
+      this.code = e.code
+      const choice = keymap[this.code];
+      
+      // normal flow for non-channel choices
+      if (this.guide[choice] === undefined) {
+        this.listener(this.code)
+        return
+      }
+
+      if (this.wait) {
+        return
+      }
+
+      this.wait = true
+      this.prev_code = this.code
+      this.listener(this.code)
+
+      setTimeout(() => {
+        this.wait = false
+        if (this.code !== this.prev_code) {
+          this.pre_listener({code: this.code})
+        }
+      }, 4000)
+    },
+
+    listener(code) {
+      const choice = keymap[code];
 
       const record = (obj) => {
         const preamble = {
-          code: e.code,
+          code,
           choice,
           power: this.power,
           ready: this.ready,
@@ -167,7 +212,7 @@ export default {
         return;
       }
 
-      console.log(e.code, "->", choice);
+      console.log(code, "->", choice);
 
       // easter egg?
       if (this.state) {
@@ -180,7 +225,7 @@ export default {
           return;
         } else {
           this.state = undefined;
-          this.$nextTick(() => this.listener({ code: e.code }));
+          this.$nextTick(() => this.listener({ code }));
         }
         return;
       }
@@ -281,11 +326,13 @@ export default {
       }, 10000);
 
       if (playlist) {
-        this.player.loadPlaylist({ list: id, listType: "playlist" }); // TODO: add currentTime
+        const index = this.guide[choice].index !== -1 ?this.guide[choice].index :0
+        this.player.loadPlaylist({ list: id, listType: "playlist", index});
+        this.startSeconds = this.guide[choice].currentTime
+        console.log(`ch selected, startSecond=${this.startSeconds}`)
       } else {
         this.player.loadVideoById(id, this.guide[choice].currentTime);
       }
-      this.player.playVideo();
       this.paused = false
     },
   },

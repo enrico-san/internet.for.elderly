@@ -1,5 +1,5 @@
 import { contextBridge } from 'electron'
-import {appendFile} from 'fs'
+import { writeFile, appendFile } from 'fs'
 
 const got = require('got')
 const { exec } = require('child_process')
@@ -59,14 +59,19 @@ function record(obj) {
     seconds_passed: Math.round((Date.now() - last_time) / 1000),
   }
   last_time = Date.now()
-  appendFile(process.env.RECORD_FILE, "  " + JSON.stringify(Object.assign(preamble, obj)) + "\n", () => {})
+  appendFile(process.env.APP_PATH + 'record.json', "  " + JSON.stringify(Object.assign(preamble, obj)) + "\n", () => {})
 }
 
 contextBridge.exposeInMainWorld( 'api', {
   record,
 
-  update_current_time(key, time) {
+  update_current_time(key, time, index) {
     guide[key].currentTime = time
+    guide[key].index = index
+    guide_callback()
+    log(`save guide[${key}]`)
+    log(guide[key])
+    writeFile(process.env.APP_PATH + "guide.json", JSON.stringify(guide, undefined, 2), () => {})
   },
   
   set_guide_callback: (cb) => {
