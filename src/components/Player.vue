@@ -3,7 +3,16 @@
     <div id="player"></div>
     <v-overlay :value="true" :opacity="opacity">
       <transition name="fade">
-        <div class="pa-4" v-if="show_title" id="title">{{`${current_channel.choice} - ${guide[current_channel.choice].title}`}}</div>
+        <div class="pa-4" v-if="show_title" id="title">
+          {{
+            `${current_channel.choice} - ${guide[current_channel.choice].title}`
+          }}
+        </div>
+      </transition>
+      <transition name="fade" opacity="0.7">
+        <v-container v-if="paused">
+          <v-btn class="flashing" align-self="center">Pause <v-icon>mdi-pause</v-icon></v-btn>
+        </v-container>
       </transition>
       <home v-show="show_guide" />
     </v-overlay>
@@ -13,35 +22,34 @@
 <script>
 import Home from "./Home.vue";
 const keymap = {
-  "BrowserHome": 'power',
-  "Tab": '',
-  "LaunchMail": '',
-  "LaunchApp2": 'easter',
+  BrowserHome: "power",
+  Tab: "",
+  LaunchMail: "",
+  LaunchApp2: "easter",
 
-  "NumLock": '',
-  "NumpadDivide": '',
-  "NumpadMultiply": '',
-  "Backspace": 'channels',
+  NumLock: "",
+  NumpadDivide: "",
+  NumpadMultiply: "",
+  Backspace: "channels",
 
-  "Numpad7": '7',
-  "Numpad8": '8',
-  "Numpad9": '9',
+  Numpad7: "7",
+  Numpad8: "8",
+  Numpad9: "9",
 
-  "Numpad4": '4',
-  "Numpad5": '5',
-  "Numpad6": '6',
+  Numpad4: "4",
+  Numpad5: "5",
+  Numpad6: "6",
 
-  "Numpad1": '1',
-  "Numpad2": '2',
-  "Numpad3": '3',
+  Numpad1: "1",
+  Numpad2: "2",
+  Numpad3: "3",
 
-  "Numpad0": '0',
-  "Space": 'rewind',
-  "NumpadDecimal": 'forward',
+  Numpad0: "0",
+  Space: "rewind",
+  NumpadDecimal: "forward",
 
-  "NumpadEnter": 'pause',
-}
-
+  NumpadEnter: "pause",
+};
 
 export default {
   name: "Player",
@@ -59,12 +67,13 @@ export default {
     state: undefined,
     title_timeout: undefined,
     show_title: false,
+    paused: false,
   }),
 
   computed: {
-    guide () {
-      return this.$store.state.guide
-    }
+    guide() {
+      return this.$store.state.guide;
+    },
   },
 
   methods: {
@@ -85,29 +94,31 @@ export default {
 
     onPlayerReady(e) {
       console.log(this.$youtube_state(e.target.getPlayerState()));
-      this.ready = true
-      window.onkeydown = this.listener
+      this.ready = true;
+      window.onkeydown = this.listener;
     },
 
     onPlayerStateChange(e) {
-      const stateN = e.target.getPlayerState()
-      const state = this.$youtube_state(stateN)
+      const stateN = e.target.getPlayerState();
+      const state = this.$youtube_state(stateN);
       console.log(stateN, state);
-      if (state === 'ended') {
-        const { playlist } = this.current_channel
-        const lastIndex = playlist ?this.player.getPlaylist().length - 1 :-1
-        const currentIndex = playlist ?this.player.getPlaylistIndex() :0
-        const last = !playlist || currentIndex === lastIndex
+      if (state === "ended") {
+        const { playlist } = this.current_channel;
+        const lastIndex = playlist ? this.player.getPlaylist().length - 1 : -1;
+        const currentIndex = playlist ? this.player.getPlaylistIndex() : 0;
+        const last = !playlist || currentIndex === lastIndex;
         if (last) {
           this.$nextTick(() => {
             if (playlist) {
-                this.player.playVideoAt(0)
-                this.player.pauseVideo()
+              this.player.playVideoAt(0);
+              this.player.pauseVideo();
+              this.paused = true
             } else {
-              this.player.seekTo(0)
-              this.player.pauseVideo()
+              this.player.seekTo(0);
+              this.player.pauseVideo();
+              this.paused = true
             }
-          })
+          });
         }
       }
     },
@@ -115,7 +126,10 @@ export default {
     save_current_time() {
       //eslint-disable-next-line no-undef
       if (this.current_channel && YT.PlayerState.PLAYING) {
-        this.$store.dispatch('UPDATE_CURRENT_TIME', [this.current_channel.choice, this.player.playerInfo.currentTime])
+        this.$store.dispatch("UPDATE_CURRENT_TIME", [
+          this.current_channel.choice,
+          this.player.playerInfo.currentTime,
+        ]);
       }
     },
 
@@ -124,9 +138,10 @@ export default {
         this.player.pauseVideo();
         this.current_channel = undefined;
       }
-      this.show_guide = true
-      this.show_title = false
-      this.opacity = 1
+      this.show_guide = true;
+      this.paused = false;
+      this.show_title = false;
+      this.opacity = 1;
     },
 
     listener(e) {
@@ -143,10 +158,10 @@ export default {
           state: this.state,
           player_state: this.player && this.player.getPlayerState(),
           player_current_time: this.player && this.player.getCurrentTime(),
-        }
-        window.api.record(Object.assign({}, obj, preamble))
-      }
-      
+        };
+        window.api.record(Object.assign({}, obj, preamble));
+      };
+
       // player not ready, ignore keypress
       if (!this.ready) {
         return;
@@ -159,7 +174,7 @@ export default {
         if (choice === this.state.shift(0)) {
           if (this.state.length === 0) {
             this.player.pauseVideo();
-            record({action: 'halting'})
+            record({ action: "halting" });
             window.api.halt();
           }
           return;
@@ -183,13 +198,13 @@ export default {
           if (this.current_channel) {
             this.player.pauseVideo();
           }
-          record({action: 'power off'})
+          record({ action: "power off" });
           window.api.off();
           console.log("off");
           this.power = false;
         } else {
           this.toggle_channels();
-          record({action: 'power on'})
+          record({ action: "power on" });
           window.api.on();
           console.log("on");
           this.power = true;
@@ -198,37 +213,41 @@ export default {
       }
 
       if (!this.power) {
-        record({action: 'activity while off'})
+        record({ action: "activity while off" });
         return;
       }
 
-      if (choice == "pause") {
+      if (choice == "pause" && !this.show_guide) {
         if (this.player.getPlayerState() === 1) {
-          record({action: 'pause'})
+          record({ action: "pause" });
           this.player.pauseVideo();
+          this.paused = true
         } else {
-          record({action: 'unpause'})
+          record({ action: "unpause" });
           this.player.playVideo();
+          this.paused = false
         }
         return;
       }
 
       if (choice == "channels") {
-        record({action: 'guide'})
+        record({ action: "guide" });
         this.save_current_time();
         this.toggle_channels();
         return;
       }
 
-      if (choice === "rewind") {
-        record({action: 'rewind'})
+      if (choice === "rewind" && !this.show_guide) {
+        record({ action: "rewind" });
         this.player.seekTo(this.player.getCurrentTime() - 7);
         this.player.playVideo();
+        this.paused = false
         return;
-      } else if (choice === "forward") {
-        record({action: 'forward'})
+      } else if (choice === "forward" && !this.show_guide) {
+        record({ action: "forward" });
         this.player.seekTo(this.player.getCurrentTime() + 10);
         this.player.playVideo();
+        this.paused = false
         return;
       }
 
@@ -239,31 +258,35 @@ export default {
 
       const same =
         this.current_channel && choice === this.current_channel.choice;
-      record({action: 'same channel'})
+      record({ action: "same channel" });
       if (same) {
         this.player.playVideo();
+        this.paused = false
         return;
       }
 
       this.save_current_time();
 
       const { id, playlist } = this.guide[choice];
-      record({action: 'change', new_channel: { choice, id, playlist }})
-      
-      this.current_channel = { choice, id, playlist};
+      record({ action: "change", new_channel: { choice, id, playlist } });
+
+      this.current_channel = { choice, id, playlist };
       this.show_guide = false;
-      this.opacity = 0
-      
-      this.show_title = true
-      clearTimeout(this.title_timeout)
-      this.title_timeout = setTimeout(() => {this.show_title = false}, 10000)
-      
+      this.opacity = 0;
+
+      this.show_title = true;
+      clearTimeout(this.title_timeout);
+      this.title_timeout = setTimeout(() => {
+        this.show_title = false;
+      }, 10000);
+
       if (playlist) {
-        this.player.loadPlaylist({list: id, listType: 'playlist'});  // TODO: add currentTime
+        this.player.loadPlaylist({ list: id, listType: "playlist" }); // TODO: add currentTime
       } else {
         this.player.loadVideoById(id, this.guide[choice].currentTime);
       }
       this.player.playVideo();
+      this.paused = false
     },
   },
   mounted() {
@@ -273,10 +296,12 @@ export default {
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .3s;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
 }
-.fade-enter, .fade-leave-to {
+.fade-enter,
+.fade-leave-to {
   opacity: 0;
 }
 #title {
@@ -289,5 +314,21 @@ export default {
   word-break: normal !important;
   line-height: 3rem !important;
 }
-
+@keyframes glowing {
+  0% {
+    background-color: #2ba805;
+    box-shadow: 0 0 5px #2ba805;
+  }
+  50% {
+    background-color: #3bbb14;
+    box-shadow: 0 0 20px #3bbb14;
+  }
+  100% {
+    background-color: #2ba805;
+    box-shadow: 0 0 5px #2ba805;
+  }
+}
+.flashing {
+  animation: glowing 3000ms infinite;
+}
 </style>
