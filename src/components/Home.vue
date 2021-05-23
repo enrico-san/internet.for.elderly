@@ -3,15 +3,15 @@
     <v-main>
       <v-container class="pt-8 pl-8 ma-0">
         <v-row v-for="([a, b], index) in guide.value" :key="index">
+          <v-col class="" :cols="1" align-self="end" align="center">
+            <v-card class="elevated"
+              ><h1>{{ a.ch }}</h1></v-card
+            >
+          </v-col>
           <v-col class="" :cols="2">
             <v-card>
               <v-img :src="a.thumbnail_url"></v-img>
             </v-card>
-          </v-col>
-          <v-col class="" :cols="1" align-self="end" align="center">
-            <v-card class="elevated"
-              ><h2>{{ a.ch }}</h2></v-card
-            >
           </v-col>
           <v-col class="" :cols="3" align-self="end">
             <v-card>
@@ -19,21 +19,15 @@
             </v-card>
           </v-col>
 
+          <v-col class="" :cols="1" align-self="end" align="center" v-if="b != undefined">
+            <v-card class="elevated"
+              ><h2>{{ b.ch }}</h2></v-card
+            >
+          </v-col>
           <v-col class="ml-0" :cols="2" v-if="b != undefined">
             <v-card>
               <v-img :src="b.thumbnail_url"></v-img>
             </v-card>
-          </v-col>
-          <v-col
-            class=""
-            :cols="1"
-            align-self="end"
-            align="center"
-            v-if="b != undefined"
-          >
-            <v-card class="elevated"
-              ><h2>{{ b.ch }}</h2></v-card
-            >
           </v-col>
           <v-col class="" :cols="3" v-if="b != undefined" align-self="end">
             <v-card>
@@ -55,8 +49,8 @@ export default {
     return {
       guide: computed(() => {
         const guide = Object.entries(this.$store.getters.guide);
-        guide.sort( (a,b) => Number.parseInt(a[0]) - Number.parseInt(b[0]))
-        guide.forEach( el => Object.assign(el[1], {ch: el[0]}) )  // [1, {...}] to [1, {ch: 1, ...}]
+        guide.sort((a, b) => Number.parseInt(a[0]) - Number.parseInt(b[0]));
+        guide.forEach((el) => Object.assign(el[1], { ch: el[0] })); // [1, {...}] to [1, {ch: 1, ...}]
         const splitted = [];
         const half = Math.ceil(guide.length / 2);
         for (let i = 0; i < half; i++) {

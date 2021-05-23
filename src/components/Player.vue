@@ -21,35 +21,6 @@
 
 <script>
 import Home from "./Home.vue";
-const keymap = {
-  BrowserHome: "power",
-  Tab: "",
-  LaunchMail: "",
-  LaunchApp2: "easter",
-
-  NumLock: "",
-  NumpadDivide: "",
-  NumpadMultiply: "",
-  Backspace: "channels",
-
-  Numpad7: "7",
-  Numpad8: "8",
-  Numpad9: "9",
-
-  Numpad4: "4",
-  Numpad5: "5",
-  Numpad6: "6",
-
-  Numpad1: "1",
-  Numpad2: "2",
-  Numpad3: "3",
-
-  Numpad0: "0",
-  Space: "rewind",
-  NumpadDecimal: "forward",
-
-  NumpadEnter: "pause",
-};
 
 export default {
   name: "Player",
@@ -62,7 +33,7 @@ export default {
     ready: false,
     show_guide: true,
     opacity: 0,
-    power: true,
+    power: false,
     current_channel: undefined,
     state: undefined,
     title_timeout: undefined,
@@ -72,6 +43,7 @@ export default {
     wait: false,
     code: undefined,
     prev_code: undefined,
+    keymap: window.api.keymap(),
   }),
 
   computed: {
@@ -118,10 +90,12 @@ export default {
               this.player.playVideoAt(0);
               this.player.pauseVideo();
               this.paused = true
+              this.show_title = true;
             } else {
               this.player.seekTo(0);
               this.player.pauseVideo();
               this.paused = true
+              this.show_title = false;
             }
           });
         }
@@ -165,10 +139,11 @@ export default {
 
     pre_listener(e) {
       this.code = e.code
-      const choice = keymap[this.code];
+      const choice = this.keymap[this.code];
       
       // normal flow for non-channel choices
-      if (this.guide[choice] === undefined) {
+      if (this.guide[choice] === undefined || this.state) {
+        this.prev_code = this.code
         this.listener(this.code)
         return
       }
@@ -190,7 +165,7 @@ export default {
     },
 
     listener(code) {
-      const choice = keymap[code];
+      const choice = this.keymap[code];
 
       const record = (obj) => {
         const preamble = {
@@ -217,7 +192,9 @@ export default {
       // easter egg?
       if (this.state) {
         if (choice === this.state.shift(0)) {
+          console.log(`easter seq: ${choice}`)
           if (this.state.length === 0) {
+            console.log('halting')
             this.player.pauseVideo();
             record({ action: "halting" });
             window.api.halt();
@@ -225,12 +202,13 @@ export default {
           return;
         } else {
           this.state = undefined;
-          this.$nextTick(() => this.listener({ code }));
+          this.$nextTick(() => this.listener(code));
         }
         return;
       }
 
       if (choice === "easter") {
+        console.log('easter')
         this.state = ["3", "1", "4", "1", "5"];
         return;
       } else {
@@ -267,10 +245,14 @@ export default {
           record({ action: "pause" });
           this.player.pauseVideo();
           this.paused = true
+          this.show_title = true;
+          this.startSeconds = undefined
+          clearTimeout(this.title_timeout)
         } else {
           record({ action: "unpause" });
           this.player.playVideo();
           this.paused = false
+          this.show_title = false;
         }
         return;
       }
@@ -287,12 +269,14 @@ export default {
         this.player.seekTo(this.player.getCurrentTime() - 7);
         this.player.playVideo();
         this.paused = false
+        this.show_title = false;
         return;
       } else if (choice === "forward" && !this.show_guide) {
         record({ action: "forward" });
         this.player.seekTo(this.player.getCurrentTime() + 10);
         this.player.playVideo();
         this.paused = false
+        this.show_title = false;
         return;
       }
 
@@ -307,6 +291,7 @@ export default {
       if (same) {
         this.player.playVideo();
         this.paused = false
+        this.show_title = false;
         return;
       }
 
@@ -322,6 +307,7 @@ export default {
       this.show_title = true;
       clearTimeout(this.title_timeout);
       this.title_timeout = setTimeout(() => {
+        console.log('title off')
         this.show_title = false;
       }, 10000);
 

@@ -41,6 +41,7 @@ export default {
   mounted() {
     window.api.set_guide_callback(this.guide_updated)
     this.check_connectivity()
+    // window.api.off();
   }
 };
 </script>
