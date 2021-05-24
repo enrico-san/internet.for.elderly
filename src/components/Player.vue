@@ -5,7 +5,7 @@
       <transition name="fade">
         <div class="pa-4" v-if="show_title" id="title">
           {{
-            `${current_channel.choice} - ${guide[current_channel.choice].title}`
+            `${choice} - ${guide[choice].title}`
           }}
         </div>
       </transition>
@@ -33,17 +33,16 @@ export default {
     ready: false,
     show_guide: true,
     opacity: 0,
-    power: false,
-    current_channel: undefined,
-    state: undefined,
+    power: true,
+    choice: undefined,
+    easter: undefined,
     title_timeout: undefined,
     show_title: false,
     paused: false,
-    startSeconds: undefined,
     wait: false,
-    code: undefined,
     prev_code: undefined,
     keymap: window.api.keymap(),
+    ch_info: {},  // <0..9>: {index, id, time}
   }),
 
   computed: {
@@ -53,6 +52,14 @@ export default {
   },
 
   methods: {
+    is_playing() {
+      return (this.player.getPlayerState() === 1)
+    },
+
+    video_id() {
+      return this.player.getVideoData().video_id
+    },
+
     create() {
       const options = {
         playerVars: { autoplay: 1, controls: 0, disablekb: 1 },
@@ -64,14 +71,11 @@ export default {
         },
       };
       this.player = this.$youtube_create_player("player", options);
-
-      window.api.log((v) => console.log(v));
     },
 
-    onPlayerReady(e) {
-      console.log(this.$youtube_state(e.target.getPlayerState()));
+    onPlayerReady() {
       this.ready = true;
-      window.onkeydown = this.pre_listener;
+      window.onkeydown = this.listener;
     },
 
     onPlayerStateChange(e) {
@@ -80,102 +84,52 @@ export default {
       console.log(stateN, state);
 
       if (state === "ended") {
-        const { playlist } = this.current_channel;
-        const lastIndex = playlist ? this.player.getPlaylist().length - 1 : -1;
-        const currentIndex = playlist ? this.player.getPlaylistIndex() : 0;
-        const last = !playlist || currentIndex === lastIndex;
+        const ch = this.choice
+        const last = this.ch_info[ch].ids.length - 1 === this.ch_info[ch].index
         if (last) {
           this.$nextTick(() => {
-            if (playlist) {
-              this.player.playVideoAt(0);
-              this.player.pauseVideo();
-              this.paused = true
-              this.show_title = true;
-            } else {
-              this.player.seekTo(0);
-              this.player.pauseVideo();
-              this.paused = true
-              this.show_title = false;
-            }
+            this.player.seekTo(0);
+            this.player.pauseVideo();
+            this.paused = true
+            this.show_title = false;
           });
-        }
-      } else if (state === 'playing') {
-        const { choice, playlist } = this.current_channel
-        if (!playlist) {
-          return
-        }
-        const time = this.guide[choice].currentTime
-        const index = this.player.getPlaylistIndex()
-        console.log(`choice ${choice}, index ${index}, time ${time}, startSeconds ${this.startSeconds}, duration ${this.player.getDuration()}`)
-        
-        if (this.startSeconds) {
-          this.player.seekTo(this.startSeconds)
-          this.startSeconds = undefined
+        } else {
+          this.ch_info[this.choice].index++
+          this.ch_info[this.choice].time = 0
+          this.load_and_play(this.choice)
         }
       }
     },
 
     save_current_time() {
       //eslint-disable-next-line no-undef
-      if (this.current_channel && YT.PlayerState.PLAYING) {
-        this.$store.dispatch("UPDATE_CURRENT_TIME", [
-          this.current_channel.choice,
-          this.player.playerInfo.currentTime,
-          this.player.getPlaylistIndex()
-        ]);
+      if (this.player.getPlayerState() === 1) {
+        this.ch_info[this.choice].time = this.player.playerInfo.currentTime
       }
     },
 
     toggle_channels() {
-      if (this.current_channel !== undefined) {
-        this.player.pauseVideo();
-        this.current_channel = undefined;
-      }
-      this.show_guide = true;
+      this.player.pauseVideo();
       this.paused = false;
+      this.choice = undefined;
+      this.show_guide = true;
       this.show_title = false;
       this.opacity = 1;
     },
 
-    pre_listener(e) {
+    listener(e) {
       this.code = e.code
       const choice = this.keymap[this.code];
-      
-      // normal flow for non-channel choices
-      if (this.guide[choice] === undefined || this.state) {
-        this.prev_code = this.code
-        this.listener(this.code)
-        return
-      }
-
-      if (this.wait) {
-        return
-      }
-
-      this.wait = true
-      this.prev_code = this.code
-      this.listener(this.code)
-
-      setTimeout(() => {
-        this.wait = false
-        if (this.code !== this.prev_code) {
-          this.pre_listener({code: this.code})
-        }
-      }, 4000)
-    },
-
-    listener(code) {
-      const choice = this.keymap[code];
 
       const record = (obj) => {
         const preamble = {
-          code,
-          choice,
+          code: this.code,
           power: this.power,
           ready: this.ready,
           show_guide: this.show_guide,
-          current_channel: this.current_channel,
-          state: this.state,
+          prev_choice: this.choice,
+          choice,
+          easter: this.easter,
           player_state: this.player && this.player.getPlayerState(),
           player_current_time: this.player && this.player.getCurrentTime(),
         };
@@ -187,13 +141,13 @@ export default {
         return;
       }
 
-      console.log(code, "->", choice);
+      console.log(this.code, "->", choice);
 
       // easter egg?
-      if (this.state) {
-        if (choice === this.state.shift(0)) {
+      if (this.easter) {
+        if (choice === this.easter.shift(0)) {
           console.log(`easter seq: ${choice}`)
-          if (this.state.length === 0) {
+          if (this.easter.length === 0) {
             console.log('halting')
             this.player.pauseVideo();
             record({ action: "halting" });
@@ -201,26 +155,23 @@ export default {
           }
           return;
         } else {
-          this.state = undefined;
-          this.$nextTick(() => this.listener(code));
+          this.easter = undefined;
+          this.$nextTick(() => this.listener(e));
         }
         return;
       }
 
       if (choice === "easter") {
         console.log('easter')
-        this.state = ["3", "1", "4", "1", "5"];
+        this.easter = ["3", "1", "4", "1", "5"];
         return;
       } else {
-        this.state = undefined;
+        this.easter = undefined;
       }
 
       if (choice === "power") {
         if (this.power) {
-          this.save_current_time();
-          if (this.current_channel) {
-            this.player.pauseVideo();
-          }
+          this.player.pauseVideo();
           record({ action: "power off" });
           window.api.off();
           console.log("off");
@@ -241,12 +192,11 @@ export default {
       }
 
       if (choice == "pause" && !this.show_guide) {
-        if (this.player.getPlayerState() === 1) {
+        if (this.is_playing()) {
           record({ action: "pause" });
           this.player.pauseVideo();
           this.paused = true
           this.show_title = true;
-          this.startSeconds = undefined
           clearTimeout(this.title_timeout)
         } else {
           record({ action: "unpause" });
@@ -259,7 +209,6 @@ export default {
 
       if (choice == "channels") {
         record({ action: "guide" });
-        this.save_current_time();
         this.toggle_channels();
         return;
       }
@@ -281,26 +230,29 @@ export default {
       }
 
       // after this, only numbers accepted
-      if (!this.guide || this.guide[choice] === undefined) {
+      if (this.guide[choice] === undefined) {
         return;
       }
 
-      const same =
-        this.current_channel && choice === this.current_channel.choice;
-      record({ action: "same channel" });
-      if (same) {
+      if (choice === this.choice) {
+        record({ action: "same channel" });
         this.player.playVideo();
         this.paused = false
         this.show_title = false;
         return;
       }
 
-      this.save_current_time();
+      if (!(choice in this.ch_info)) {
+        this.ch_info[choice] = {index: 0, id: this.guide[choice].ids[0], time: 0}
+      }
+      record({ action: "change", new_channel: { choice, ...this.ch_info[choice] } });
+      this.load_and_play(choice)
+    },
 
-      const { id, playlist } = this.guide[choice];
-      record({ action: "change", new_channel: { choice, id, playlist } });
+    load_and_play(choice) {
+      const {id, time} = this.ch_info[choice]
 
-      this.current_channel = { choice, id, playlist };
+      this.choice = choice;
       this.show_guide = false;
       this.opacity = 0;
 
@@ -311,18 +263,14 @@ export default {
         this.show_title = false;
       }, 10000);
 
-      if (playlist) {
-        const index = this.guide[choice].index !== -1 ?this.guide[choice].index :0
-        this.player.loadPlaylist({ list: id, listType: "playlist", index});
-        this.startSeconds = this.guide[choice].currentTime
-        console.log(`ch selected, startSecond=${this.startSeconds}`)
-      } else {
-        this.player.loadVideoById(id, this.guide[choice].currentTime);
-      }
+      this.player.loadVideoById(id, time);
       this.paused = false
-    },
+    }
   },
+
+
   mounted() {
+    window.api.log((v) => console.log(v));
     this.$youtube_on_api_ready(this.create);
   },
 };

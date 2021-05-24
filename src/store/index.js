@@ -12,9 +12,6 @@ const this_store = new Vuex.Store({
     UPDATE_GUIDE({commit}) {
       const guide = window.api.guide()
       commit('SET_GUIDE', guide)
-      // setInterval(() => {
-      //   retrieve_guide()
-      // }, 60*5*1000)
     },
     UPDATE_CURRENT_TIME({commit}, payload) {  // [channel, time, playlist index]
       commit('SET_CURRENT_TIME', payload)

@@ -14,32 +14,35 @@ record({action: 'reboot'})
 
 // })
 
-let guide = {}
+let guide = []
+for(let i=0; i<100; i++) {
+  guide.push({ch: i})
+}
 let guide_callback = undefined
 
 async function retrieve_guide() {
+  log('in retrieve_guide')
   try {
-    const json_prom_1 = got(process.env.I4E_GUIDE_URL).json()
-    const new_guide = await json_prom_1
-    
-    for (let el of Object.values(new_guide)) {
-      const id = el.id
+    const new_guide = await got(process.env.I4E_GUIDE_URL).json()
+
+    // clear guide
+    guide.length = 0
+    for(let i=0; i<100; i++) {
+      guide.push({ch: i})
+    }
+        
+    // populate guide
+    for (let el of new_guide) {
+      const ref = el.ref
       let url
       if (el.playlist) {
-        url = `https://www.youtube.com/oembed?url=https://www.youtube.com/playlist?list=${id}&format=json`
+        url = `https://www.youtube.com/oembed?url=https://www.youtube.com/playlist?list=${ref}&format=json`
       } else {
-        url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`
+        url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ref}&format=json`
       }
-      const json_prom_2 = got(url).json()
-      const info = await json_prom_2
+      const info = await got(url).json()
       Object.assign(el, info)
-    }
-    
-    for (let [k,v] of Object.entries(new_guide)) {
-      if (!guide.hasOwnProperty(k)) {
-        guide[k] = {}
-      }
-      Object.assign(guide[k], v)
+      guide[el.ch] = el
     }
 
     guide_callback && guide_callback()
@@ -96,7 +99,7 @@ contextBridge.exposeInMainWorld( 'api', {
   log: f => {
     log = f
     log('test log')
-    log(`${errors}`)
+    log(`${JSON.stringify(errors)}`)
   },
 
   halt: () => {
