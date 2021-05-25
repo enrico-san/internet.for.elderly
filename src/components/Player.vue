@@ -42,7 +42,7 @@ export default {
     wait: false,
     prev_code: undefined,
     keymap: window.api.keymap(),
-    ch_info: {},  // <0..9>: {index, id, time}
+    ch_info: {},  // <0..9>: {index of guide[].ids, id, time: {id: currentTime}}
   }),
 
   computed: {
@@ -52,6 +52,10 @@ export default {
   },
 
   methods: {
+    make_ch_info(ch) {
+      this.ch_info[ch] = {index: 0, id: this.guide[ch].ids[0], time: {}}
+    },
+
     find_next_avail_channel(ch) {
       const avail = this.guide.slice(ch+1).filter(el => el.ids !== undefined)
       if (avail.length) {
@@ -121,8 +125,10 @@ export default {
 
     save_current_time() {
       //eslint-disable-next-line no-undef
-      if (this.player.getPlayerState() === 1) {
-        this.ch_info[this.choice].time = this.player.playerInfo.currentTime
+      if (this.is_playing()) {
+        const id = this.player.getVideoData().video_id
+        const time = this.player.playerInfo.currentTime
+        this.ch_info[this.choice].time[id] = time
       }
     },
 
@@ -219,7 +225,7 @@ export default {
         const ch = this.find_next_avail_channel(this.choice)
         if (ch !== undefined) {
           if (!(ch in this.ch_info)) {
-            this.ch_info[ch] = {index: 0, id: this.guide[ch].ids[0], time: 0}
+            this.make_ch_info(ch)
           }
           record({ action: "change", new_channel: { ch, ...this.ch_info[ch] } });
           this.load_and_play(ch)
@@ -228,7 +234,7 @@ export default {
         const ch = this.find_prev_avail_channel(this.choice)
         if (ch !== undefined) {
           if (!(ch in this.ch_info)) {
-            this.ch_info[ch] = {index: 0, id: this.guide[ch].ids[0], time: 0}
+            this.make_ch_info(ch)
           }
           record({ action: "change", new_channel: { ch, ...this.ch_info[ch] } });
           this.load_and_play(ch)
@@ -287,14 +293,15 @@ export default {
       }
 
       if (!(choice in this.ch_info)) {
-        this.ch_info[choice] = {index: 0, id: this.guide[choice].ids[0], time: 0}
+        this.make_ch_info(choice)
       }
       record({ action: "change", new_channel: { choice, ...this.ch_info[choice] } });
       this.load_and_play(choice)
     },
 
     load_and_play(choice) {
-      const {id, time} = this.ch_info[choice]
+      const {id} = this.ch_info[choice]
+      const time = this.ch_info[choice].time[id]
 
       this.choice = choice;
       this.show_guide = false;
@@ -316,6 +323,7 @@ export default {
   mounted() {
     window.api.log((v) => console.log(v));
     this.$youtube_on_api_ready(this.create);
+    setInterval(() => this.save_current_time(), 5000)
   },
 };
 </script>
