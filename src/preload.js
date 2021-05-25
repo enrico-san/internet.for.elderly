@@ -66,6 +66,14 @@ function record(obj) {
 }
 
 contextBridge.exposeInMainWorld( 'api', {
+  volume_up() {
+    exec("amixer -M set Master 10%+", (err, stdout, stderr) => { })
+  },
+
+  volume_down() {
+    exec("amixer -M set Master 10%-", (err, stdout, stderr) => { })
+  },
+
   keymap() {
     return JSON.parse(readFileSync(process.env.I4E_KEYMAP))
   },

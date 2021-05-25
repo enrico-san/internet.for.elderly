@@ -52,6 +52,24 @@ export default {
   },
 
   methods: {
+    find_next_avail_channel(ch) {
+      const avail = this.guide.slice(ch+1).filter(el => el.ids !== undefined)
+      if (avail.length) {
+        return avail[0].ch
+      } else {
+        return undefined
+      }
+    },
+
+    find_prev_avail_channel(ch) {
+      const avail = this.guide.slice(0, ch).filter(el => el.ids !== undefined)
+      if (avail.length) {
+        return avail.slice(-1)[0].ch
+      } else {
+        return undefined
+      }
+    },
+
     is_playing() {
       return (this.player.getPlayerState() === 1)
     },
@@ -189,6 +207,32 @@ export default {
       if (!this.power) {
         record({ action: "activity while off" });
         return;
+      }
+
+      if (choice === 'volume-up') {
+        window.api.volume_up()
+      } else if (choice === 'volume-down') {
+        window.api.volume_down()
+      }
+
+      if (choice === 'next-channel' && !this.show_guide && this.choice !== undefined) {
+        const ch = this.find_next_avail_channel(this.choice)
+        if (ch !== undefined) {
+          if (!(ch in this.ch_info)) {
+            this.ch_info[ch] = {index: 0, id: this.guide[ch].ids[0], time: 0}
+          }
+          record({ action: "change", new_channel: { ch, ...this.ch_info[ch] } });
+          this.load_and_play(ch)
+        }
+      } else if (choice === 'prev-channel' && !this.show_guide && this.choice !== undefined) {
+        const ch = this.find_prev_avail_channel(this.choice)
+        if (ch !== undefined) {
+          if (!(ch in this.ch_info)) {
+            this.ch_info[ch] = {index: 0, id: this.guide[ch].ids[0], time: 0}
+          }
+          record({ action: "change", new_channel: { ch, ...this.ch_info[ch] } });
+          this.load_and_play(ch)
+        }
       }
 
       if (choice == "pause" && !this.show_guide) {
