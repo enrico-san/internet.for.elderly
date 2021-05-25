@@ -34,14 +34,11 @@ export default {
         }
       })
     },
-    guide_updated() {
-      this.$store.dispatch('UPDATE_GUIDE')
-    }
   },
   mounted() {
-    window.api.set_guide_callback(this.guide_updated)
+    this.$store.dispatch('UPDATE_GUIDE')
     this.check_connectivity()
-    // window.api.off();
+    window.api.off();
   }
 };
 </script>

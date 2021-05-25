@@ -14,48 +14,6 @@ record({action: 'reboot'})
 
 // })
 
-let guide = []
-for(let i=0; i<100; i++) {
-  guide.push({ch: i})
-}
-let guide_callback = undefined
-
-async function retrieve_guide() {
-  log('in retrieve_guide')
-  try {
-    const new_guide = await got(process.env.I4E_GUIDE_URL).json()
-
-    // clear guide
-    guide.length = 0
-    for(let i=0; i<100; i++) {
-      guide.push({ch: i})
-    }
-        
-    // populate guide
-    for (let el of new_guide) {
-      const ref = el.ref
-      let url
-      if (el.playlist) {
-        url = `https://www.youtube.com/oembed?url=https://www.youtube.com/playlist?list=${ref}&format=json`
-      } else {
-        url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ref}&format=json`
-      }
-      const info = await got(url).json()
-      Object.assign(el, info)
-      guide[el.ch] = el
-    }
-
-    guide_callback && guide_callback()
-  } catch (error) {
-    log(error);
-  }
-}
-
-retrieve_guide()
-setInterval(() => {
-  retrieve_guide()
-}, 60*1*1000)
-
 function record(obj) {
   const preamble = {
     ts: new Date(),
@@ -80,21 +38,23 @@ contextBridge.exposeInMainWorld( 'api', {
 
   record,
 
-  update_current_time(key, time, index) {
-    guide[key].currentTime = time
-    guide[key].index = index
-    guide_callback()
-    log(`save guide[${key}]`)
-    log(guide[key])
-    writeFile(process.env.APP_PATH + "/guide.json", JSON.stringify(guide, undefined, 2), () => {})
-  },
-  
   set_guide_callback: (cb) => {
     guide_callback = cb
     guide_callback()
   },
 
-  guide: () => guide,
+  guide() {
+    let guide = []
+    for(let i=0; i<100; i++) {
+      guide.push({ch: i})
+    }
+    const _guide = JSON.parse(readFileSync(process.env.APP_PATH + '/guide.json'))
+    _guide.forEach(el => {
+      guide[el.ch] = el
+    })
+
+    return guide
+  },
 
   off: () => {
     exec("vcgencmd display_power 0", (err, stdout, stderr) => { })

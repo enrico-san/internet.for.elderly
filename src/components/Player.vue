@@ -42,7 +42,7 @@ export default {
     wait: false,
     prev_code: undefined,
     keymap: window.api.keymap(),
-    ch_info: {},  // <0..9>: {index of guide[].ids, id, time: {id: currentTime}}
+    ch_info: {},  // <0..9>: {index of guide[].ids, time: {id: currentTime}}
   }),
 
   computed: {
@@ -53,7 +53,7 @@ export default {
 
   methods: {
     make_ch_info(ch) {
-      this.ch_info[ch] = {index: 0, id: this.guide[ch].ids[0], time: {}}
+      this.ch_info[ch] = {index: 0, time: {}}
     },
 
     find_next_avail_channel(ch) {
@@ -75,7 +75,10 @@ export default {
     },
 
     is_playing() {
-      return (this.player.getPlayerState() === 1)
+      if (this.player === undefined) {
+        return false
+      }
+      return this.player.getPlayerState() === 1
     },
 
     video_id() {
@@ -107,17 +110,18 @@ export default {
 
       if (state === "ended") {
         const ch = this.choice
-        const last = this.ch_info[ch].ids.length - 1 === this.ch_info[ch].index
+        const last = this.guide[ch].ids.length - 1 === this.ch_info[ch].index
         if (last) {
           this.$nextTick(() => {
-            this.player.seekTo(0);
-            this.player.pauseVideo();
-            this.paused = true
-            this.show_title = false;
+            this.ch_info[ch].index = 0
+            this.ch_info[ch].time = {}
+            this.toggle_channels()
           });
         } else {
-          this.ch_info[this.choice].index++
-          this.ch_info[this.choice].time = 0
+          this.ch_info[ch].index++
+          const index = this.ch_info[ch].index
+          const id = this.guide[ch].ids[index]
+          this.ch_info[this.choice].time[id] = 0
           this.load_and_play(this.choice)
         }
       }
@@ -187,7 +191,7 @@ export default {
 
       if (choice === "easter") {
         console.log('easter')
-        this.easter = ["3", "1", "4", "1", "5"];
+        this.easter = [3, 1, 4, 1, 5];
         return;
       } else {
         this.easter = undefined;
@@ -300,7 +304,8 @@ export default {
     },
 
     load_and_play(choice) {
-      const {id} = this.ch_info[choice]
+      const index = this.ch_info[choice].index 
+      const id = this.guide[choice].ids[index]
       const time = this.ch_info[choice].time[id]
 
       this.choice = choice;
