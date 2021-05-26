@@ -33,7 +33,7 @@ export default {
     ready: false,
     show_guide: true,
     opacity: 0,
-    power: true,
+    power: false,
     choice: undefined,
     easter: undefined,
     title_timeout: undefined,
@@ -214,7 +214,7 @@ export default {
         return;
       }
 
-      if (!this.power) {
+      if (!this.power && (this.guide[choice] === undefined || this.guide[choice].ids === undefined)) {
         record({ action: "activity while off" });
         return;
       }
@@ -304,6 +304,9 @@ export default {
     },
 
     load_and_play(choice) {
+      if (this.guide[choice].ids === undefined) {
+        return
+      }
       const index = this.ch_info[choice].index 
       const id = this.guide[choice].ids[index]
       const time = this.ch_info[choice].time[id]
