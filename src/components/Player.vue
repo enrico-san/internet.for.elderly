@@ -39,10 +39,10 @@ export default {
     title_timeout: undefined,
     show_title: false,
     paused: false,
-    wait: false,
-    prev_code: undefined,
     keymap: window.api.keymap(),
     ch_info: {},  // <0..9>: {index of guide[].ids, time: {id: currentTime}}
+    last_key: {choice: '', t0: 0},
+    sleep_timeout: undefined,
   }),
 
   computed: {
@@ -75,7 +75,7 @@ export default {
     },
 
     is_playing() {
-      if (this.player === undefined) {
+      if (this.player === undefined || this.player.getPlayerState === undefined) {
         return false
       }
       return this.player.getPlayerState() === 1
@@ -145,13 +145,23 @@ export default {
       this.opacity = 1;
     },
 
-    listener(e) {
-      this.code = e.code
-      const choice = this.keymap[this.code];
+    listener(e, choice_override) {
+      const choice = choice_override ?choice_override :this.keymap[e.code];
+
+      // block autorepeat except volume, forward/rewind
+      const t1 = Date.now()
+      const exceptions = ['volume-up', 'volume-down', 'forward', 'rewind'].includes(choice)
+      const repeat = choice === this.last_key.choice
+      const too_fast = t1 - this.last_key.t0 < 700
+      if (!exceptions && repeat && too_fast) {
+        this.last_key.t0 = t1
+        return
+      }
+      this.last_key = {choice, t0: t1}
 
       const record = (obj) => {
         const preamble = {
-          code: this.code,
+          code: e.code,
           power: this.power,
           ready: this.ready,
           show_guide: this.show_guide,
@@ -169,7 +179,7 @@ export default {
         return;
       }
 
-      console.log(this.code, "->", choice);
+      console.log(e.code, "->", choice);
 
       // easter egg?
       if (this.easter) {
@@ -214,9 +224,17 @@ export default {
         return;
       }
 
-      if (!this.power && (this.guide[choice] === undefined || this.guide[choice].ids === undefined)) {
-        record({ action: "activity while off" });
-        return;
+      if (!this.power) {
+        if ((this.guide[choice] === undefined || this.guide[choice].ids === undefined)) {
+          record({ action: "activity while off" });
+          return
+        } else {
+          // turn on and continue with the given channel
+          record({ action: "power on" })
+          window.api.on();
+          console.log("on")
+          this.power = true
+        }
       }
 
       if (choice === 'volume-up') {
@@ -332,6 +350,28 @@ export default {
     window.api.log((v) => console.log(v));
     this.$youtube_on_api_ready(this.create);
     setInterval(() => this.save_current_time(), 5000)
+
+    setInterval(() => {
+      const will_sleep = this.sleep_timeout !== undefined
+      const frozen = [0, 2].includes(this.player.getPlayerState()) || this.show_guide
+      const on = this.power
+      // console.log(`on ${on}, will_sleep ${will_sleep}, frozen ${frozen}`)
+      if (on && (frozen)) {
+        if (will_sleep) {
+          return
+        } else {
+          clearTimeout(this.sleep_timeout)
+          this.sleep_timeout = setTimeout(() => {
+            // console.log('time to sleep')
+            this.listener({code: 'override'}, 'power')
+          }, 8*60*1000)
+        }
+      } else {
+        // console.log('not now')
+        clearTimeout(this.sleep_timeout)
+        this.sleep_timeout = undefined
+      }
+    }, 1*60*1000)
   },
 };
 </script>
