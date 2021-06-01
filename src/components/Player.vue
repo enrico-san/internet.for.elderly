@@ -1,7 +1,7 @@
 <template>
   <v-container ma-0 pa-0>
     <div id="player"></div>
-    <v-overlay :value="true" :opacity="opacity">
+    <v-overlay class="my-overlay" :value="true" :opacity="opacity">
       <transition name="fade">
         <div class="pa-4" v-if="show_title" id="title">
           {{
@@ -10,8 +10,10 @@
         </div>
       </transition>
       <transition name="fade" opacity="0.7">
-        <v-container v-if="paused">
-          <v-btn class="flashing" align-self="center">Pause <v-icon>mdi-pause</v-icon></v-btn>
+        <v-container v-if="paused" fill-height fluid>
+          <v-row justify="center" no-gutters>
+            <v-btn class="flashing" align-self="center">Pause <v-icon>mdi-pause</v-icon></v-btn>
+          </v-row>
         </v-container>
       </transition>
       <home v-show="show_guide" />
@@ -412,4 +414,8 @@ export default {
 .flashing {
   animation: glowing 3000ms infinite;
 }
+.my-overlay >>> .v-overlay__content {
+    width: 100%;
+    height: 100%;
+  }
 </style>

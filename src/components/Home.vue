@@ -1,15 +1,15 @@
 <template>
   <v-app>
     <v-main>
-      <v-container class="pt-8 pl-8 ma-0 xl">
+      <v-container pt-8 pl-8 ma-0 xl fluid>
         <v-row v-for="a in guide.value" :key="a.ch">
           <template v-if="a.ids !== undefined">
-            <v-col class="" cols="3" align-self="end" align="center">
+            <v-col class="" cols="1" align-self="end" align="center">
               <v-card class="elevated"
                 ><h1>{{ a.ch }}</h1></v-card
               >
             </v-col>
-            <v-col class="" cols="9" align-self="end">
+            <v-col class="" cols="11" align-self="end">
               <v-card>
                 <v-card-title>{{ a.title }}</v-card-title>
               </v-card>
