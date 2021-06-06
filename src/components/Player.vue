@@ -1,7 +1,10 @@
 <template>
-  <v-container ma-0 pa-0>
-    <div id="player"></div>
-    <v-overlay class="my-overlay" :value="true" :opacity="opacity">
+  <v-app>
+    <v-main v-show="!show_guide">
+      <div id="player"></div>
+    </v-main>
+    
+    <v-overlay :opacity="opacity" v-show="!show_guide">
       <transition name="fade">
         <div class="pa-4" v-if="show_title" id="title">
           {{
@@ -9,6 +12,7 @@
           }}
         </div>
       </transition>
+
       <transition name="fade" opacity="0.7">
         <v-container v-if="paused" fill-height fluid>
           <v-row justify="center" no-gutters>
@@ -16,9 +20,10 @@
           </v-row>
         </v-container>
       </transition>
-      <home v-show="show_guide" />
     </v-overlay>
-  </v-container>
+    
+    <home v-show="show_guide" />
+  </v-app>
 </template>
 
 <script>
