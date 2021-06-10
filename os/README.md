@@ -1,15 +1,4 @@
-# .profile
-xmodmap -e 'keycode 82 = XF86AudioRaiseVolume'
-xmodmap -e 'keycode 86 = XF86AudioLowerVolume'
-xmodmap -e 'keycode 23 = NoSymbol' # tab
-xmodmap -e 'keycode 148 = NoSymbol' # calc
-xmodmap -e 'keycode 163 = NoSymbol' # email
-xmodmap -e 'keycode 180 = NoSymbol' # browser home
-
 numlockx off
-xmodmap -e 'keycode 77 = NoSymbol' # numlock
-
-xset r off
 
 # /home/pi/.config/autostart/yt4e.desktop
 [Desktop Entry]
@@ -34,3 +23,24 @@ network={
 }
 
 $> wpa_cli -i wlan0 reconfigure
+
+# rpi-serve service
+file: /lib/systemd/system/rpi-serve.service
+content:
+  [Unit]
+  Description=Serve media for i4e
+  After=network.target
+
+  [Service]
+  Type=simple
+  User=enry
+  ExecStart=/home/enry/.yarn/bin/serve /home/enry/.internet.for.elderly/media
+  Restart=on-failure
+
+  [Install]
+  WantedBy=multi-user.target
+
+sudo systemctl daemon-reload
+sudo systemctl start rpi-serve
+sudo systemctl enable rpi-serve
+sudo systemctl status rpi-serve

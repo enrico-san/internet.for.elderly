@@ -1,10 +1,10 @@
 <template>
   <v-app>
-    <v-main v-show="!show_guide">
+    <v-main v-show="scene==='player'">
       <div id="player"></div>
     </v-main>
     
-    <v-overlay :opacity="opacity" v-show="!show_guide">
+    <v-overlay :opacity="opacity" v-show="scene==='player'">
       <transition name="fade">
         <div class="pa-4" v-if="show_title" id="title">
           {{
@@ -22,12 +22,17 @@
       </transition>
     </v-overlay>
     
-    <home v-show="show_guide" />
+    <home v-show="scene==='guide'" />
+
+    <v-main v-show="scene==='message'">
+      <audio controls autoplay :src="message.url" @ended="media_play_ended"></audio>
+    </v-main>
   </v-app>
 </template>
 
 <script>
 import Home from "./Home.vue";
+import {eventBus} from "../eventBus"
 
 export default {
   name: "Player",
@@ -38,7 +43,7 @@ export default {
   data: () => ({
     player: undefined,
     ready: false,
-    show_guide: true,
+    scene: 'guide',  // player, guide, message
     opacity: 0,
     power: false,
     choice: undefined,
@@ -56,9 +61,24 @@ export default {
     guide() {
       return this.$store.state.guide;
     },
+    message() {
+      return this.$store.getters.message
+    },
   },
 
   methods: {
+    got_messages() {
+      this.scene = 'message'
+    },
+
+    media_play_ended() {
+      this.$store.dispatch('MESSAGE_PLAYED')
+      if (this.$store.getters.message.empty) {
+        console.log('back to guide')
+        this.scene = 'guide'
+      }
+    },
+
     make_ch_info(ch) {
       this.ch_info[ch] = {index: 0, time: {}}
     },
@@ -147,7 +167,7 @@ export default {
       this.player.pauseVideo();
       this.paused = false;
       this.choice = undefined;
-      this.show_guide = true;
+      this.scene = 'guide';
       this.show_title = false;
       this.opacity = 1;
     },
@@ -171,7 +191,7 @@ export default {
           code: e.code,
           power: this.power,
           ready: this.ready,
-          show_guide: this.show_guide,
+          scene: this.scene,
           prev_choice: this.choice,
           choice,
           easter: this.easter,
@@ -250,7 +270,7 @@ export default {
         window.api.volume_down()
       }
 
-      if (choice === 'next-channel' && !this.show_guide && this.choice !== undefined) {
+      if (choice === 'next-channel' && this.scene === 'player' && this.choice !== undefined) {
         const ch = this.find_next_avail_channel(this.choice)
         if (ch !== undefined) {
           if (!(ch in this.ch_info)) {
@@ -259,7 +279,7 @@ export default {
           record({ action: "change", new_channel: { ch, ...this.ch_info[ch] } });
           this.load_and_play(ch)
         }
-      } else if (choice === 'prev-channel' && !this.show_guide && this.choice !== undefined) {
+      } else if (choice === 'prev-channel' && this.scene === 'player' && this.choice !== undefined) {
         const ch = this.find_prev_avail_channel(this.choice)
         if (ch !== undefined) {
           if (!(ch in this.ch_info)) {
@@ -270,7 +290,7 @@ export default {
         }
       }
 
-      if (choice == "pause" && !this.show_guide) {
+      if (choice == "pause" && this.scene === 'player') {
         if (this.is_playing()) {
           record({ action: "pause" });
           this.player.pauseVideo();
@@ -292,14 +312,14 @@ export default {
         return;
       }
 
-      if (choice === "rewind" && !this.show_guide) {
+      if (choice === "rewind" && this.scene === 'player') {
         record({ action: "rewind" });
         this.player.seekTo(this.player.getCurrentTime() - 7);
         this.player.playVideo();
         this.paused = false
         this.show_title = false;
         return;
-      } else if (choice === "forward" && !this.show_guide) {
+      } else if (choice === "forward" && this.scene === 'player') {
         record({ action: "forward" });
         this.player.seekTo(this.player.getCurrentTime() + 10);
         this.player.playVideo();
@@ -337,7 +357,7 @@ export default {
       const time = this.ch_info[choice].time[id]
 
       this.choice = choice;
-      this.show_guide = false;
+      this.scene = 'player';
       this.opacity = 0;
 
       this.show_title = true;
@@ -354,13 +374,20 @@ export default {
 
 
   mounted() {
+    eventBus.$on('messages', () => {
+      console.log('got messages')
+      this.got_messages()
+    })
+
     window.api.log((v) => console.log(v));
     this.$youtube_on_api_ready(this.create);
+
     setInterval(() => this.save_current_time(), 5000)
 
+    // sleep timer
     setInterval(() => {
       const will_sleep = this.sleep_timeout !== undefined
-      const frozen = [0, 2].includes(this.player.getPlayerState()) || this.show_guide
+      const frozen = [0, 2].includes(this.player.getPlayerState()) || this.scene === 'guide'
       const on = this.power
       // console.log(`on ${on}, will_sleep ${will_sleep}, frozen ${frozen}`)
       if (on && (frozen)) {

@@ -9,6 +9,7 @@ import store from './store/index';
 import router from './router/router';
 import VueCompositionApi from '@vue/composition-api';
 import youtube from './plugins/youtube'
+import {eventBus} from './eventBus'
 
 Vue.use(VueCompositionApi);
 Vue.use(Vuetify)
@@ -16,6 +17,16 @@ Vue.use(Vuex)
 Vue.use(youtube)
 
 Vue.config.productionTip = false
+
+const ws_client = new WebSocket('ws://localhost:8081');
+ws_client.onmessage = e => {
+  const data = JSON.parse(e.data)
+  console.log(data)
+  store.dispatch('UPDATE_MESSAGES', data)
+  eventBus.$emit('messages')
+}
+ws_client.onopen = () => console.log('ws connected')
+
 
 const app = new Vue({
   vuetify,

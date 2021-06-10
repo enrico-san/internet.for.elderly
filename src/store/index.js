@@ -5,7 +5,8 @@ Vue.use(Vuex);
 
 const this_store = new Vuex.Store({
   state: {
-    guide: {}  // reactive only:source of truth is preload.js->guide
+    guide: {},
+    messages: [],
   },
   actions: {  // store.dispatch(args)
     // ACTION({commit}, payload) { commit('MUTATION', payload) }
@@ -13,16 +14,29 @@ const this_store = new Vuex.Store({
       const guide = window.api.guide()
       commit('SET_GUIDE', guide)
     },
+    UPDATE_MESSAGES({commit}, payload) {
+      commit('APPEND_MESSAGES', payload)
+    },
+    MESSAGE_PLAYED({commit}) {
+      commit('NEXT_MESSAGE')
+    },
   },
   mutations: {
     // MUTATION(state, payload) {state.var = payload...}
     SET_GUIDE(state, guide) {
       state.guide = guide
     },
+    APPEND_MESSAGES(state, payload) {
+      state.messages.push(...payload)
+    },
+    NEXT_MESSAGE(state) {
+      state.messages.splice(0, 1)
+    },
   },
   getters: {  // store.getters.<var>
     //<var>(state) { return state.var }
     guide(state) { return state.guide },
+    message(state) { return state.messages[0] || {empty: true} },
   },
 })
 

@@ -1,5 +1,5 @@
 import { contextBridge } from 'electron'
-import { writeFile, appendFile, readFileSync } from 'fs'
+import { appendFile, readFileSync } from 'fs'
 
 const got = require('got')
 const { exec } = require('child_process')
@@ -9,10 +9,6 @@ const errors = []
 let last_time = Date.now()
 
 record({action: 'reboot'})
-
-// window.addEventListener('DOMContentLoaded', () => {
-
-// })
 
 function record(obj) {
   const preamble = {
