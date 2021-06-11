@@ -32,7 +32,7 @@
       >
         <v-icon color="orange" size="100">mdi-bell-ring-outline</v-icon>
 
-        <v-card-title>Hai {{message_count}} messaggi{{message_count == 1 ?'o' :''}} da Ola</v-card-title>
+        <v-card-title>Hai {{message_count}} messaggi{{message_count == 1 ?'o' :''}} da {{message.sender}}</v-card-title>
 
         <v-card-title>
           <div class="my-4">
@@ -128,6 +128,10 @@ export default {
 
     media_play_ended() {
       this.$store.dispatch('MESSAGE_PLAYED')
+      if (this.power === false) {
+        return
+      }
+
       if (this.$store.getters.message.empty) {
         if (this.was_off) {
           console.log('ended: was off')
@@ -323,16 +327,21 @@ export default {
         if (this.power) {
           this.scene = 'guide'
           this.player.pauseVideo();
+          this.$refs.audio.pause()
           record({ action: "power off" });
           window.api.off();
           console.log("off");
           this.power = false;
         } else {
-          this.toggle_channels();
           record({ action: "power on" });
           window.api.on();
           console.log("on");
           this.power = true;
+          if (this.message_count) {
+            this.got_message()
+          } else {
+            this.toggle_channels();
+          }
         }
         return;
       }
@@ -421,6 +430,7 @@ export default {
 
       if (choice === this.choice) {
         record({ action: "same channel" });
+        this.scene = 'player'
         this.player.playVideo();
         this.paused = false
         this.show_title = false;
@@ -455,6 +465,10 @@ export default {
 
       this.player.loadVideoById(id, time);
       this.paused = false
+
+      if (this.message_count) {
+        this.got_message()
+      }
     }
   },
 
