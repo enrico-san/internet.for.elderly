@@ -37,6 +37,7 @@ const this_store = new Vuex.Store({
     //<var>(state) { return state.var }
     guide(state) { return state.guide },
     message(state) { return state.messages[0] || {empty: true} },
+    message_count(state) { return state.messages.length },
   },
 })
 

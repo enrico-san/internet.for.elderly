@@ -25,7 +25,23 @@
     <home v-show="scene==='guide'" />
 
     <v-main v-show="scene==='message'">
-      <audio controls autoplay :src="message.url" @ended="media_play_ended"></audio>
+      <v-card
+        class="mx-auto my-12"
+        min-width="800"
+        max-width="800"
+      >
+        <v-icon color="orange" size="100">mdi-bell-ring-outline</v-icon>
+
+        <v-card-title>Hai {{message_count}} messaggi{{message_count == 1 ?'o' :''}} da Ola</v-card-title>
+
+        <v-card-title>
+          <div class="my-4">
+            Premi il canale zero per ascoltarl{{message_count == 1 ?'o' :'i'}}
+          </div>
+        </v-card-title>
+      </v-card>
+      <audio ref="tone" src="@/assets/message.mp3"></audio>
+      <audio ref="audio" :src="message.url" @ended="media_play_ended"></audio>
     </v-main>
   </v-app>
 </template>
@@ -41,20 +57,23 @@ export default {
   },
 
   data: () => ({
-    player: undefined,
-    ready: false,
-    scene: 'guide',  // player, guide, message
-    opacity: 0,
-    power: false,
+    ch_info: {},  // <0..9>: {index of guide[].ids, time: {id: currentTime}}
     choice: undefined,
     easter: undefined,
-    title_timeout: undefined,
-    show_title: false,
-    paused: false,
     keymap: window.api.keymap(),
-    ch_info: {},  // <0..9>: {index of guide[].ids, time: {id: currentTime}}
     last_key: {choice: '', t0: 0},
+    opacity: 0,
+    paused: false,
+    play_tone_timeout: undefined,
+    player: undefined,
+    power: false,
+    ready: false,
+    scene: 'guide',  // player, guide, message
+    show_title: false,
     sleep_timeout: undefined,
+    title_timeout: undefined,
+    was_playing: undefined,
+    was_off: undefined,
   }),
 
   computed: {
@@ -64,18 +83,70 @@ export default {
     message() {
       return this.$store.getters.message
     },
+    message_count() {
+      return this.$store.getters.message_count
+    }
   },
 
   methods: {
-    got_messages() {
-      this.scene = 'message'
+    got_message() {
+      if (this.scene === 'message') {
+        console.log('already in message scene')
+        return
+      }
+
+      this.was_off = false
+      this.was_playing = false
+      if (!this.power) {
+        console.log('from power off')
+        this.listener({code: 'override'}, 'power')
+        this.scene = 'message'
+        this.was_off = true
+      } else if (this.scene === 'player') {
+        console.log('from playing')
+        this.was_playing = true
+        this.pause_playing()
+        this.scene = 'message'
+        this.$refs.tone.play()
+        return
+      } else {
+        console.log('from other')
+        this.scene = 'message'
+      }
+
+      let count = 1
+      clearInterval(this.play_tone_timeout)
+      this.play_tone_timeout = setInterval(() => {
+        if (count-- !== 0) {
+          console.log(this, this.$refs)
+          this.$refs.tone.play()
+        } else {
+          clearInterval(this.play_tone_timeout)
+        }
+      }, 5000)
     },
 
     media_play_ended() {
       this.$store.dispatch('MESSAGE_PLAYED')
       if (this.$store.getters.message.empty) {
-        console.log('back to guide')
-        this.scene = 'guide'
+        if (this.was_off) {
+          console.log('ended: was off')
+          this.power && this.listener({code: 'override'}, 'power')
+          this.scene = 'guide'
+        } else if (this.was_playing) {
+          console.log('ended: was playing')
+          this.scene = 'player'
+          this.paused = false
+          this.player.playVideo();
+        } else {
+          console.log('ended: was other')
+          this.scene = 'guide'
+        }
+      } else {
+        clearInterval(this.play_tone_timeout)
+        setTimeout(() => {
+          this.$refs.audio.play()
+        }, 2000)
       }
     },
 
@@ -172,6 +243,11 @@ export default {
       this.opacity = 1;
     },
 
+    pause_playing() {
+      this.player.pauseVideo();
+      this.paused = true;
+    },
+
     listener(e, choice_override) {
       const choice = choice_override ?choice_override :this.keymap[e.code];
 
@@ -200,6 +276,15 @@ export default {
         };
         window.api.record(Object.assign({}, obj, preamble));
       };
+
+      if (this.scene === 'message' && choice === 0) {
+        clearInterval(this.play_tone_timeout)
+        this.$refs.audio.play()
+        return
+      } else if (this.scene === 'message' && choice > 0 && choice <= 9 && choice !== 'power') {
+        // must read message before continuing
+        return
+      }
 
       // player not ready, ignore keypress
       if (!this.ready) {
@@ -236,6 +321,7 @@ export default {
 
       if (choice === "power") {
         if (this.power) {
+          this.scene = 'guide'
           this.player.pauseVideo();
           record({ action: "power off" });
           window.api.off();
@@ -375,8 +461,11 @@ export default {
 
   mounted() {
     eventBus.$on('messages', () => {
-      console.log('got messages')
-      this.got_messages()
+      const now = new Date().getHours()
+      if (now >= 11 && now <= 21) {
+        console.log('got messages')
+        this.got_message()
+      }
     })
 
     window.api.log((v) => console.log(v));
@@ -446,8 +535,4 @@ export default {
 .flashing {
   animation: glowing 3000ms infinite;
 }
-.my-overlay >>> .v-overlay__content {
-    width: 100%;
-    height: 100%;
-  }
 </style>

@@ -33,7 +33,7 @@ content:
 
   [Service]
   Type=simple
-  User=enry
+  User=pi
   ExecStart=/home/enry/.yarn/bin/serve /home/enry/.internet.for.elderly/media
   Restart=on-failure
 
