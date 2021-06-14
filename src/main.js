@@ -18,14 +18,15 @@ Vue.use(youtube)
 
 Vue.config.productionTip = false
 
-const ws_client = new WebSocket('ws://localhost:8081');
-ws_client.onmessage = e => {
+const ws = new WebSocket('ws://localhost:8081');
+Vue.prototype.$ws = ws
+ws.onmessage = e => {
   const data = JSON.parse(e.data)
   console.log(data)
   store.dispatch('UPDATE_MESSAGES', data)
   eventBus.$emit('messages')
 }
-ws_client.onopen = () => console.log('ws connected')
+ws.onopen = () => console.log('ws connected')
 
 
 const app = new Vue({

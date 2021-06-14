@@ -25,6 +25,7 @@
     <home v-show="scene==='guide'" />
 
     <v-main v-show="scene==='message'">
+      <audio ref="tone" src="@/assets/message.mp3"></audio>
       <v-card
         class="mx-auto my-12"
         min-width="800"
@@ -40,7 +41,6 @@
           </div>
         </v-card-title>
       </v-card>
-      <audio ref="tone" src="@/assets/message.mp3"></audio>
       <audio ref="audio" :src="message.url" @ended="media_play_ended"></audio>
     </v-main>
   </v-app>
@@ -89,7 +89,12 @@ export default {
   },
 
   methods: {
+    admin(msg) {
+      this.$ws.send(JSON.stringify({command: 'log', message: msg}))
+    },
+
     got_message() {
+      this.admin(`got message from ${this.message.sender}`)
       if (this.scene === 'message') {
         console.log('already in message scene')
         return
@@ -133,6 +138,8 @@ export default {
       }
 
       if (this.$store.getters.message.empty) {
+        this.admin('listened all messages')
+
         if (this.was_off) {
           console.log('ended: was off')
           this.power && this.listener({code: 'override'}, 'power')
@@ -265,6 +272,7 @@ export default {
         return
       }
       this.last_key = {choice, t0: t1}
+      this.admin(`pressed ${choice} (power was ${this.power ?'on' :'off'})`)
 
       const record = (obj) => {
         const preamble = {
@@ -282,6 +290,8 @@ export default {
       };
 
       if (this.scene === 'message' && choice === 0) {
+        this.admin('listening now')
+        
         clearInterval(this.play_tone_timeout)
         this.$refs.audio.play()
         return
@@ -325,6 +335,7 @@ export default {
 
       if (choice === "power") {
         if (this.power) {
+          this.admin('power off')
           this.scene = 'guide'
           this.player.pauseVideo();
           this.$refs.audio.pause()
@@ -333,6 +344,7 @@ export default {
           console.log("off");
           this.power = false;
         } else {
+          this.admin('power on')
           record({ action: "power on" });
           window.api.on();
           console.log("on");
@@ -429,6 +441,7 @@ export default {
       }
 
       if (choice === this.choice) {
+        this.admin('same channel')
         record({ action: "same channel" });
         this.scene = 'player'
         this.player.playVideo();
@@ -474,9 +487,9 @@ export default {
 
 
   mounted() {
+    this.admin('reboot')
     eventBus.$on('messages', () => {
-      const now = new Date().getHours()
-      if (now >= 11 && now <= 21) {
+      if (window.api.can_show_message()) {
         console.log('got messages')
         this.got_message()
       }
@@ -499,7 +512,7 @@ export default {
         } else {
           clearTimeout(this.sleep_timeout)
           this.sleep_timeout = setTimeout(() => {
-            // console.log('time to sleep')
+            this.admin('sleep')
             this.listener({code: 'override'}, 'power')
           }, 8*60*1000)
         }

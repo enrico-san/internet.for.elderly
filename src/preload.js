@@ -20,6 +20,12 @@ function record(obj) {
 }
 
 contextBridge.exposeInMainWorld( 'api', {
+  can_show_message() {
+    const hour = new Date().getHours()
+    const time_ok = hour >= 11 && hour < 21
+    return process.env.I4E_CAN_SHOW_MESSAGE || time_ok
+  },
+
   volume_up() {
     exec("amixer -M set Master 10%+", (err, stdout, stderr) => { })
   },
