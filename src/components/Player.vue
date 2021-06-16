@@ -94,6 +94,11 @@ export default {
     },
 
     got_message() {
+      if (!this.message.isVoice) {
+        this.$store.dispatch('MESSAGE_PLAYED')
+        return
+      }
+      
       this.admin(`got message from ${this.message.sender}`)
       if (this.scene === 'message') {
         console.log('already in message scene')
@@ -272,7 +277,10 @@ export default {
         return
       }
       this.last_key = {choice, t0: t1}
-      this.admin(`pressed ${choice} (power was ${this.power ?'on' :'off'})`)
+
+      if (!repeat) {
+        this.admin(`pressed ${choice} (power was ${this.power ?'on' :'off'})`)
+      }
 
       const record = (obj) => {
         const preamble = {
