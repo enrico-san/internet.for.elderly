@@ -61,3 +61,12 @@ sudo systemctl enable rpi-serve
 sudo systemctl status rpi-serve
 
 journalctl -u rpi-telegram.service
+
+# edit env
+sudo systemctl edit rpi-telegram
+
+[Service]
+Environment="TELEGRAM_ID="
+Environment="TELEGRAM_HASH="
+Environment="TELEGRAM_SESSION_KIDU2="
+Environment="APP_PATH=/home/pi/.internet.for.elderly"

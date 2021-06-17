@@ -497,10 +497,8 @@ export default {
   mounted() {
     this.admin('reboot')
     eventBus.$on('messages', () => {
-      if (window.api.can_show_message()) {
-        console.log('got messages')
-        this.got_message()
-      }
+      console.log('got messages')
+      this.got_message()
     })
 
     window.api.log((v) => console.log(v));

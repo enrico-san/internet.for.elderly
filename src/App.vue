@@ -2,12 +2,13 @@
     <v-app>
         <div>
             <player v-if="has_internet" />
+            <!-- <wifi v-else /> -->
         </div>
     </v-app>
 </template>
 
 <script>
-// import Home from "./components/Home.vue"
+// import Wifi from "./components/Wifi.vue"
 import Player from "./components/Player.vue"
 
 export default {
@@ -19,6 +20,7 @@ export default {
   },
   components: {
       Player,
+      // Wifi
   },
   methods: {
     check_connectivity() {
