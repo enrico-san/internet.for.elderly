@@ -33,11 +33,11 @@
       >
         <v-icon color="orange" size="100">mdi-bell-ring-outline</v-icon>
 
-        <v-card-title>Hai {{message_count}} messaggi{{message_count == 1 ?'o' :''}} da {{message.sender}}</v-card-title>
+        <v-card-title>Hai {{message_count_human}} messaggi{{message_count == 1 ?'o' :''}} da {{message.sender}}</v-card-title>
 
         <v-card-title>
           <div class="my-4">
-            Premi il canale zero per ascoltarl{{message_count == 1 ?'o' :'i'}}
+            Premi il canale 0 per ascoltarl{{message_count == 1 ?'o' :'i'}}
           </div>
         </v-card-title>
       </v-card>
@@ -85,6 +85,13 @@ export default {
     },
     message_count() {
       return this.$store.getters.message_count
+    },
+    message_count_human() {
+      if (this.message_count > 5) {
+        return 'alcuni'
+      } else {
+        return ['zero', 'un', 'due', 'tre', 'quattro', 'cinque'][this.message_count]
+      }
     }
   },
 
