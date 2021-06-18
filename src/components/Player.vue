@@ -28,18 +28,12 @@
       <audio ref="tone" src="@/assets/message.mp3"></audio>
       <v-card
         class="mx-auto my-12"
-        min-width="800"
-        max-width="800"
+        min-width="1300"
+        max-width="1300"
       >
         <v-icon color="orange" size="100">mdi-bell-ring-outline</v-icon>
 
-        <v-card-title>Hai {{message_count_human}} messaggi{{message_count == 1 ?'o' :''}} da {{message.sender}}</v-card-title>
-
-        <v-card-title>
-          <div class="my-4">
-            Premi il canale 0 per ascoltarl{{message_count == 1 ?'o' :'i'}}
-          </div>
-        </v-card-title>
+        <v-card-title class="pt-15"><h1>C'è un messaggio da {{message.sender}}! Vai sul canale 0 per sentirlo</h1></v-card-title>
       </v-card>
       <audio ref="audio" :src="message.url" @ended="media_play_ended"></audio>
     </v-main>
