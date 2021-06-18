@@ -291,6 +291,7 @@ export default {
 
       const record = (obj) => {
         const preamble = {
+          version: window.api.version(),
           code: e.code,
           power: this.power,
           ready: this.ready,

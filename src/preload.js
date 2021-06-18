@@ -10,8 +10,13 @@ let last_time = Date.now()
 
 record({action: 'reboot'})
 
+function version() {
+  return 'voice-msg'
+}
+
 function record(obj) {
   const preamble = {
+    version: version(),
     ts: new Date(),
     seconds_passed: Math.round((Date.now() - last_time) / 1000),
   }
@@ -20,6 +25,10 @@ function record(obj) {
 }
 
 contextBridge.exposeInMainWorld( 'api', {
+  version() {
+    return version()
+  },
+
   volume_up() {
     exec("amixer -M set Master 10%+", (err, stdout, stderr) => { })
   },
