@@ -10,6 +10,7 @@
     "electron:build": "vue-cli-service electron:build --dir --armv7l --linux AppImage",
     "electron:build-desktop": "vue-cli-service electron:build",
     "electron:serve": "vue-cli-service electron:serve",
+    "electron:target": "NODE_ENV=production ON_TARGET_MACHINE=1 I4E_CAN_SHOW_MESSAGE=0 yarn electron:serve",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
   },
